@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Channel Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fab fa-youtube"></i>
+                    <h1>YouTube Analyzer</h1>
+                </div>
+                <div class="header-subtitle">
+                    チャンネルの詳細分析ツール
+                </div>
+            </div>
+            <div class="header-bg"></div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Section -->
+            <section class="search-section">
+                <div class="search-container">
+                    <h2>チャンネルを分析する</h2>
+                    <p>YouTubeチャンネルのURLを入力してください</p>
+                    
+                    <form class="search-form" id="analyzeForm">
+                        <div class="input-group">
+                            <div class="input-wrapper">
+                                <i class="fas fa-link input-icon"></i>
+                                <input 
+                                    type="url" 
+                                    id="channelUrl" 
+                                    placeholder="https://www.youtube.com/@channel-name" 
+                                    required
+                                    class="url-input"
+                                >
+                            </div>
+                            <button type="submit" class="analyze-btn">
+                                <i class="fas fa-search"></i>
+                                <span>分析開始</span>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="url-examples">
+                        <p>対応URL形式:</p>
+                        <ul>
+                            <li>https://www.youtube.com/@username</li>
+                            <li>https://www.youtube.com/channel/ID</li>
+                            <li>https://www.youtube.com/c/channelname</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading Section -->
+            <section class="loading-section hidden" id="loadingSection">
+                <div class="loading-container">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                    <h3>チャンネルを分析中...</h3>
+                    <p>データを取得しています</p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section hidden" id="resultsSection">
+                <div class="results-container">
+                    <!-- Channel Header -->
+                    <div class="channel-header">
+                        <div class="channel-avatar">
+                            <img id="channelThumbnail" src="" alt="Channel Avatar">
+                        </div>
+                        <div class="channel-info">
+                            <h2 id="channelTitle"></h2>
+                            <p class="channel-id" id="channelId"></p>
+                            <p class="channel-created" id="channelCreated"></p>
+                            <p class="channel-url" id="channelUrl"></p>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="stats-grid">
+                        <div class="stat-card subscribers">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" id="subscriberCount">0</div>
+                                <div class="stat-label">登録者数</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card views">
+                            <div class="stat-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" id="viewCount">0</div>
+                                <div class="stat-label">総再生回数</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card videos">
+                            <div class="stat-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="stat-content">
+                                <div class="stat-number" id="videoCount">0</div>
+                                <div class="stat-label">動画数</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Channel Description -->
+                    <div class="description-card">
+                        <h3><i class="fas fa-info-circle"></i> チャンネル概要</h3>
+                        <p id="channelDescription"></p>
+                    </div>
+
+                    <!-- Analytics Dashboard -->
+                    <div class="analytics-section">
+                        <h3><i class="fas fa-chart-line"></i> 詳細分析</h3>
+                        <div class="analytics-grid">
+                            <div class="analytics-card">
+                                <h4><i class="fas fa-chart-bar"></i> 総合統計</h4>
+                                <div class="analytics-stats">
+                                    <div class="analytics-stat">
+                                        <span class="label">平均再生数:</span>
+                                        <span class="value" id="averageViews">-</span>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <span class="label">総いいね数:</span>
+                                        <span class="value" id="totalLikes">-</span>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <span class="label">総コメント数:</span>
+                                        <span class="value" id="totalComments">-</span>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <span class="label">人気投稿日:</span>
+                                        <span class="value" id="popularDay">-</span>
+                                    </div>
+                                    <div class="analytics-stat">
+                                        <span class="label">投稿頻度:</span>
+                                        <span class="value" id="uploadFrequency">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="analytics-card">
+                                <h4><i class="fas fa-chart-pie"></i> チャンネル成長推移</h4>
+                                <div class="chart-container">
+                                    <canvas id="growthChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Videos -->
+                    <div class="top-videos-section">
+                        <h3><i class="fas fa-trophy"></i> 人気動画 TOP10</h3>
+                        <div class="top-videos-list" id="topVideosList">
+                            <!-- Top videos will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Videos -->
+                    <div class="videos-section">
+                        <h3><i class="fas fa-clock"></i> 最新動画</h3>
+                        <div class="videos-grid" id="videosGrid">
+                            <!-- Video cards will be populated here -->
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn btn-secondary" id="analyzeAnotherBtn">
+                            <i class="fas fa-plus"></i>
+                            別のチャンネルを分析
+                        </button>
+                        <button class="btn btn-primary" id="exportDataBtn">
+                            <i class="fas fa-download"></i>
+                            データをエクスポート
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section hidden" id="errorSection">
+                <div class="error-container">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>エラーが発生しました</h3>
+                    <p id="errorMessage"></p>
+                    <button class="btn btn-primary" id="retryBtn">
+                        <i class="fas fa-redo"></i>
+                        再試行
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 YouTube Channel Analyzer. Powered by YouTube Data API v3</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
