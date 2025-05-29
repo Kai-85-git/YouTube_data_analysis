@@ -540,7 +540,6 @@ body {
     border-radius: 12px;
     padding: 24px;
     margin: 20px 0;
-    text-align: center;
     color: white;
 }
 
@@ -2010,6 +2009,15 @@ body {
     margin: 0 auto;
 }
 
+/* Ensure all AI analysis content is left-aligned */
+.ai-analysis-container * {
+    text-align: left;
+}
+
+.ai-analysis-container .analysis-card * {
+    text-align: left;
+}
+
 .ai-analysis-header {
     display: flex;
     justify-content: space-between;
@@ -2087,15 +2095,45 @@ body {
     padding: 20px;
     border-radius: 8px;
     border-left: 4px solid #667eea;
-    line-height: 1.6;
+    line-height: 1.7;
     color: #2c3e50;
+    text-align: left;
+    font-size: 15px;
 }
 
-.ai-analysis-text h5 {
-    color: #667eea;
-    margin: 16px 0 8px 0;
-    font-weight: 600;
+/* Bullet point styling */
+.ai-analysis-text div[style*="padding-left: 15px"] {
+    position: relative;
+    margin: 8px 0;
+    padding-left: 25px !important;
+    color: #495057;
 }
+
+/* Numbered list styling */
+.ai-analysis-text div[style*="padding-left: 20px"] {
+    margin: 10px 0;
+    padding: 8px 0 8px 25px !important;
+    border-left: 2px solid #e9ecef;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 4px;
+}
+
+/* Section headings in AI text */
+.ai-analysis-text h5 {
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 6px;
+    margin-top: 25px !important;
+    margin-bottom: 15px !important;
+}
+
+.ai-analysis-text h6 {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-top: 20px !important;
+    margin-bottom: 12px !important;
+}
+
 
 .ai-analysis-text ul {
     margin: 8px 0;
@@ -2117,6 +2155,7 @@ body {
     padding: 20px;
     border-radius: 8px;
     border-left: 4px solid #28a745;
+    text-align: left;
 }
 
 .video-idea-title {
@@ -2128,8 +2167,9 @@ body {
 
 .video-idea-description {
     color: #666;
-    line-height: 1.5;
-    margin-bottom: 8px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+    text-align: left;
 }
 
 .video-idea-timing {

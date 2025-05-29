@@ -308,6 +308,28 @@ class YouTubeAnalyzerApp {
     }
   }
 
+  formatAIText(text) {
+    if (!text) return '';
+    
+    let formatted = text
+      // 見出し（##）を整形
+      .replace(/^## (.*?)$/gm, '<h5 style="color: #667eea; margin: 20px 0 10px 0; font-weight: 600;">$1</h5>')
+      // 見出し（###）を整形
+      .replace(/^### (.*?)$/gm, '<h6 style="color: #2c3e50; margin: 15px 0 8px 0; font-weight: 600;">$1</h6>')
+      // 太字を整形
+      .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #2c3e50;">$1</strong>')
+      // 番号付きリスト（1. 2. 3.）を整形
+      .replace(/^(\d+)\.\s+(.*?)$/gm, '<div style="margin: 8px 0; padding-left: 20px;"><strong style="color: #667eea;">$1.</strong> $2</div>')
+      // ハイフンやアスタリスクのリストを日本語の箇条書きに変換
+      .replace(/^[-*]\s+(.*?)$/gm, '<div style="margin: 6px 0; padding-left: 15px;">・ $1</div>')
+      // 複数の改行を適切なスペースに変換
+      .replace(/\n\s*\n/g, '<div style="margin: 15px 0;"></div>')
+      // 単一の改行をスペースに変換
+      .replace(/\n/g, '<br style="margin: 4px 0;">');
+    
+    return formatted;
+  }
+  
   displayAIAnalysisResults(data) {
     const section = document.getElementById('aiAnalysisSection');
     const performanceMetrics = document.getElementById('performance-metrics');
@@ -356,7 +378,7 @@ class YouTubeAnalyzerApp {
       console.log('AI分析結果:', data.aiAnalysis.analysis); // デバッグ用
       aiAnalysisText.innerHTML = `
         <div class="ai-analysis-text">
-          ${data.aiAnalysis.analysis.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+          ${this.formatAIText(data.aiAnalysis.analysis)}
         </div>
       `;
     } else {
@@ -372,7 +394,7 @@ class YouTubeAnalyzerApp {
       console.log('動画アイデア:', data.videoIdeas.ideas); // デバッグ用
       videoIdeasContainer.innerHTML = `
         <div class="ai-analysis-text">
-          ${data.videoIdeas.ideas.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+          ${this.formatAIText(data.videoIdeas.ideas)}
         </div>
       `;
     } else {
@@ -392,7 +414,7 @@ class YouTubeAnalyzerApp {
     if (data.ideas) {
       videoIdeasContainer.innerHTML = `
         <div class="ai-analysis-text">
-          ${data.ideas.replace(/\n/g, '<br>')}
+          ${this.formatAIText(data.ideas)}
         </div>
       `;
     }
