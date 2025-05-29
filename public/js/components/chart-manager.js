@@ -1,21 +1,46 @@
 export class ChartManager {
   constructor() {
     this.growthChart = null;
+    // Suppress browser extension errors
+    this.suppressExtensionErrors();
+  }
+
+  suppressExtensionErrors() {
+    // Handle message port errors from browser extensions
+    window.addEventListener('error', (event) => {
+      if (event.message && event.message.includes('message port closed')) {
+        event.preventDefault();
+        return false;
+      }
+    });
+
+    // Suppress console errors related to extensions
+    const originalError = console.error;
+    console.error = (...args) => {
+      const message = args.join(' ');
+      if (message.includes('message port closed') || 
+          message.includes('Extension context invalidated') ||
+          message.includes('runtime.lastError')) {
+        return; // Suppress these errors
+      }
+      originalError.apply(console, args);
+    };
   }
 
   createGrowthChart(channel) {
-    const ctx = document.getElementById('growthChart').getContext('2d');
-    
-    // Generate mock growth data (since historical data isn't available from API)
-    const currentSubs = channel.statistics.subscriberCount;
-    const chartData = this.generateMockGrowthData(currentSubs);
+    try {
+      const ctx = document.getElementById('growthChart').getContext('2d');
+      
+      // Generate mock growth data (since historical data isn't available from API)
+      const currentSubs = channel.statistics.subscriberCount;
+      const chartData = this.generateMockGrowthData(currentSubs);
 
-    // Destroy existing chart if it exists
-    if (this.growthChart) {
-      this.growthChart.destroy();
-    }
+      // Destroy existing chart if it exists
+      if (this.growthChart) {
+        this.growthChart.destroy();
+      }
 
-    this.growthChart = new Chart(ctx, {
+      this.growthChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: chartData.labels,
@@ -80,6 +105,14 @@ export class ChartManager {
         }
       }
     });
+    } catch (error) {
+      console.warn('Chart creation failed:', error);
+      // Hide chart container if chart creation fails
+      const chartContainer = document.querySelector('.chart-container');
+      if (chartContainer) {
+        chartContainer.style.display = 'none';
+      }
+    }
   }
 
   generateMockGrowthData(currentSubs) {

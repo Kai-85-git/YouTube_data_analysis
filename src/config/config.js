@@ -12,6 +12,10 @@ export const config = {
       topVideos: 30
     }
   },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: 'gemini-1.5-flash'
+  },
   server: {
     port: process.env.PORT || 3000,
     timeout: 30000
@@ -32,5 +36,15 @@ export function validateApiKey() {
     console.error('   4. Restart the application');
     process.exit(1);
   }
+  
+  if (!config.gemini.apiKey) {
+    console.error('❌ Gemini API key is not configured!');
+    console.error('📝 Please follow these steps:');
+    console.error('   1. Get your API key from: https://aistudio.google.com/app/apikey');
+    console.error('   2. Add GEMINI_API_KEY to your .env file');
+    console.error('   3. Restart the application');
+    process.exit(1);
+  }
+  
   return config.youtube.apiKey;
 }

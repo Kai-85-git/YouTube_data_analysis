@@ -9,11 +9,12 @@
     "cli": "node index.js"
   },
   "dependencies": {
-    "googleapis": "^128.0.0",
-    "inquirer": "^9.2.12",
-    "express": "^4.18.2",
+    "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "googleapis": "^128.0.0",
+    "inquirer": "^9.2.12"
   },
   "type": "module"
 }

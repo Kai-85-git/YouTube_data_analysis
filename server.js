@@ -8,6 +8,8 @@ import { createErrorResponse } from './src/utils/errors.js';
 import { validateYouTubeUrl } from './src/utils/validators.js';
 import { YouTubeApiService } from './src/services/youtube-api.js';
 import { CommentAnalyzer } from './src/services/comment-analyzer.js';
+import { ContentIdeaService } from './src/services/content-idea-service.js';
+import { VideoAnalysisService } from './src/services/video-analysis-service.js';
 
 // Validate API key
 validateApiKey();
@@ -26,11 +28,15 @@ app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
         "default-src 'self'; " +
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
+        "script-src-elem 'self' 'unsafe-inline' blob: data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; " +
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; " +
         "img-src 'self' data: https: blob:; " +
-        "connect-src 'self'"
+        "connect-src 'self'; " +
+        "worker-src 'self' blob: data:; " +
+        "child-src 'self' blob: data:; " +
+        "object-src 'none';"
     );
     next();
 });
@@ -40,6 +46,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 const analyzer = new YouTubeAnalyzer();
 const youtubeApi = new YouTubeApiService();
 const commentAnalyzer = new CommentAnalyzer();
+const contentIdeaService = new ContentIdeaService();
+const videoAnalysisService = new VideoAnalysisService();
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -129,6 +137,152 @@ app.post('/api/analyze-comments', async (req, res) => {
         
     } catch (error) {
         console.error(`[${new Date().toISOString()}] Comment analysis error:`, error);
+        
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
+
+app.post('/api/analyze-video-performance', async (req, res) => {
+    try {
+        const { channelId, maxVideos = 20 } = req.body;
+        
+        if (!channelId) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'チャンネルIDが必要です',
+                message: 'チャンネルIDを指定してください' 
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Analyzing video performance for channel: ${channelId}`);
+        
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
+        });
+        
+        const analysisPromise = videoAnalysisService.analyzeChannelVideos(channelId, maxVideos);
+        const result = await Promise.race([analysisPromise, timeoutPromise]);
+        
+        console.log(`[${new Date().toISOString()}] Video performance analysis completed successfully`);
+        console.log(`AI Analysis result:`, result.aiAnalysis ? 'Generated' : 'Failed');
+        console.log(`Video Ideas result:`, result.videoIdeas ? 'Generated' : 'Failed');
+        
+        res.json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Video performance analysis error:`, error);
+        
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
+app.post('/api/generate-ai-video-ideas', async (req, res) => {
+    try {
+        const { channelId, specificTopic } = req.body;
+        
+        if (!channelId) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'チャンネルIDが必要です',
+                message: 'チャンネルIDを指定してください' 
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Generating AI video ideas for channel: ${channelId}`);
+        
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
+        });
+        
+        const ideasPromise = videoAnalysisService.generateVideoIdeas(channelId, specificTopic);
+        const result = await Promise.race([ideasPromise, timeoutPromise]);
+        
+        console.log(`[${new Date().toISOString()}] AI video ideas generated successfully`);
+        
+        res.json({
+            success: true,
+            data: result
+        });
+        
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] AI video ideas generation error:`, error);
+        
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
+app.post('/api/generate-content-ideas', async (req, res) => {
+    try {
+        const { channelId, comments, topVideos } = req.body;
+        
+        if (!channelId) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'チャンネルIDが必要です',
+                message: 'チャンネルIDを指定してください' 
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Generating content ideas for channel: ${channelId}`);
+        
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
+        });
+        
+        let channelComments = comments;
+        let channelVideos = topVideos;
+        
+        if (!channelComments) {
+            channelComments = await youtubeApi.getChannelComments(channelId);
+        }
+        
+        if (!channelVideos) {
+            const channelData = await youtubeApi.getChannelVideos(channelId);
+            channelVideos = channelData.slice(0, 10);
+        }
+        
+        const viewerNeedsPromise = contentIdeaService.analyzeViewerNeeds(channelComments, channelVideos);
+        const patternsPromise = contentIdeaService.analyzePopularPatterns(channelVideos);
+        
+        const [viewerNeeds, patterns] = await Promise.race([
+            Promise.all([viewerNeedsPromise, patternsPromise]),
+            timeoutPromise
+        ]);
+        
+        const videoIdeas = await contentIdeaService.generateVideoIdeas(viewerNeeds, patterns);
+        
+        console.log(`[${new Date().toISOString()}] Content ideas generated successfully`);
+        
+        res.json({
+            success: true,
+            data: {
+                viewerNeeds,
+                patterns,
+                videoIdeas
+            }
+        });
+        
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Content idea generation error:`, error);
         
         const errorResponse = createErrorResponse(error);
         res.status(errorResponse.statusCode).json({

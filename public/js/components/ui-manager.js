@@ -8,6 +8,7 @@ export class UIManager {
     this.resultsSection = document.getElementById('resultsSection');
     this.errorSection = document.getElementById('errorSection');
     this.commentsSection = document.getElementById('commentsSection');
+    this.contentIdeasSection = document.getElementById('contentIdeasSection');
     this.errorMessage = document.getElementById('errorMessage');
   }
 
@@ -48,11 +49,30 @@ export class UIManager {
     }, 100);
   }
 
+  showContentIdeasSection() {
+    this.hideAllSections();
+    this.contentIdeasSection.classList.remove('hidden');
+    
+    // Smooth scroll to content ideas section
+    setTimeout(() => {
+      this.contentIdeasSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 100);
+  }
+
   hideAllSections() {
     this.loadingSection.classList.add('hidden');
     this.resultsSection.classList.add('hidden');
     this.errorSection.classList.add('hidden');
     this.commentsSection.classList.add('hidden');
+    this.contentIdeasSection.classList.add('hidden');
+    
+    const aiAnalysisSection = document.getElementById('aiAnalysisSection');
+    if (aiAnalysisSection) {
+      aiAnalysisSection.classList.add('hidden');
+    }
   }
 
   showTemporaryMessage(message, type = 'info') {
@@ -68,6 +88,15 @@ export class UIManager {
         document.body.removeChild(messageDiv);
       }, 300);
     }, 3000);
+  }
+
+  showAIAnalysis() {
+    this.hideAllSections();
+    const aiAnalysisSection = document.getElementById('aiAnalysisSection');
+    if (aiAnalysisSection) {
+      aiAnalysisSection.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   resetForm() {

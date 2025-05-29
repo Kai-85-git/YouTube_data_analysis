@@ -1,6 +1,7 @@
 import { UIManager } from './components/ui-manager.js';
 import { ChartManager } from './components/chart-manager.js';
 import { DataRenderer } from './components/data-renderer.js';
+import { ContentIdeaManager } from './components/content-idea-manager.js';
 import { createClientErrorMessage } from './utils/errors.js';
 
 class YouTubeAnalyzerApp {
@@ -8,7 +9,9 @@ class YouTubeAnalyzerApp {
     this.uiManager = new UIManager();
     this.chartManager = new ChartManager();
     this.dataRenderer = new DataRenderer();
+    this.contentIdeaManager = new ContentIdeaManager();
     this.currentData = null;
+    this.lastCommentAnalysisData = null;
     
     this.initializeElements();
     this.bindEvents();
@@ -22,6 +25,10 @@ class YouTubeAnalyzerApp {
     this.retryBtn = document.getElementById('retryBtn');
     this.analyzeCommentsBtn = document.getElementById('analyzeCommentsBtn');
     this.backToResultsBtn = document.getElementById('backToResultsBtn');
+    this.generateIdeasBtn = document.getElementById('generateIdeasBtn');
+    this.backToResultsFromIdeasBtn = document.getElementById('backToResultsFromIdeasBtn');
+    this.generateAIVideoIdeasBtn = document.getElementById('generateAIVideoIdeasBtn');
+    this.backToResultsFromAIBtn = document.getElementById('backToResultsFromAIBtn');
   }
 
   bindEvents() {
@@ -31,6 +38,20 @@ class YouTubeAnalyzerApp {
     this.retryBtn.addEventListener('click', () => this.resetForm());
     this.analyzeCommentsBtn.addEventListener('click', () => this.analyzeComments());
     this.backToResultsBtn.addEventListener('click', () => this.showChannelResults());
+    
+    // 条件付きでイベントリスナーを追加
+    if (this.generateIdeasBtn) {
+      this.generateIdeasBtn.addEventListener('click', () => this.generateContentIdeas());
+    }
+    this.backToResultsFromIdeasBtn.addEventListener('click', () => this.showChannelResults());
+    
+    // AI機能のイベントリスナー
+    if (this.generateAIVideoIdeasBtn) {
+      this.generateAIVideoIdeasBtn.addEventListener('click', () => this.generateAIVideoIdeas());
+    }
+    if (this.backToResultsFromAIBtn) {
+      this.backToResultsFromAIBtn.addEventListener('click', () => this.showChannelResults());
+    }
   }
 
   async handleSubmit(e) {
@@ -158,6 +179,7 @@ class YouTubeAnalyzerApp {
   }
 
   displayCommentsAnalysis(data) {
+    this.lastCommentAnalysisData = data; // コメント分析データを保存
     this.populateCommentsStatistics(data.statistics);
     this.populateCommentsList(data.topComments, 'topCommentsList');
     this.populateCommentsList(data.constructiveComments, 'constructiveCommentsList');
@@ -206,6 +228,178 @@ class YouTubeAnalyzerApp {
     });
   }
 
+  async generateContentIdeas() {
+    if (!this.currentData || !this.currentData.channel) {
+      this.uiManager.showError('チャンネルデータが見つかりません');
+      return;
+    }
+
+    this.uiManager.showContentIdeasSection();
+    
+    try {
+      const channelId = this.currentData.channel.id;
+      const comments = null; // Will be fetched by the API
+      const topVideos = this.currentData.topVideos || null;
+      
+      await this.contentIdeaManager.generateContentIdeas(channelId, comments, topVideos);
+    } catch (error) {
+      console.error('Content ideas generation error:', error);
+      const errorMessage = createClientErrorMessage(error);
+      this.uiManager.showError(errorMessage);
+    }
+  }
+
+  async generateAIVideoIdeas() {
+    if (!this.currentData || !this.currentData.channel) {
+      this.uiManager.showError('チャンネルデータが見つかりません。まずチャンネル分析を実行してください。');
+      return;
+    }
+
+    try {
+      this.uiManager.showLoading('AI分析・アイデア生成中...');
+      
+      // まずパフォーマンス分析を実行
+      const performanceResponse = await fetch('/api/analyze-video-performance', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          channelId: this.currentData.channel.id,
+          maxVideos: 30
+        })
+      });
+
+      const performanceResult = await performanceResponse.json();
+
+      if (!performanceResult.success) {
+        throw new Error(performanceResult.error || 'AI動画分析に失敗しました');
+      }
+
+      // 次にアイデア生成を実行
+      const ideasResponse = await fetch('/api/generate-ai-video-ideas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          channelId: this.currentData.channel.id
+        })
+      });
+
+      const ideasResult = await ideasResponse.json();
+
+      if (!ideasResult.success) {
+        throw new Error(ideasResult.error || 'AI動画アイデア生成に失敗しました');
+      }
+
+      // 両方の結果を統合して表示
+      const combinedData = {
+        ...performanceResult.data,
+        videoIdeas: ideasResult.data
+      };
+
+      this.displayAIAnalysisResults(combinedData);
+      
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      const errorMessage = createClientErrorMessage(error);
+      this.uiManager.showError(errorMessage);
+    }
+  }
+
+  displayAIAnalysisResults(data) {
+    const section = document.getElementById('aiAnalysisSection');
+    const performanceMetrics = document.getElementById('performance-metrics');
+    const aiAnalysisText = document.getElementById('ai-analysis-text');
+    const videoIdeasContainer = document.getElementById('video-ideas-container');
+    
+    // パフォーマンス指標を表示
+    if (data.performanceMetrics) {
+      performanceMetrics.innerHTML = `
+        <div class="performance-metrics-grid">
+          <div class="metric-item">
+            <div class="metric-value">${data.performanceMetrics.totalVideos}</div>
+            <div class="metric-label">分析動画数</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${data.performanceMetrics.averageViews.toLocaleString()}</div>
+            <div class="metric-label">平均再生回数</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${data.performanceMetrics.averageLikes.toLocaleString()}</div>
+            <div class="metric-label">平均いいね数</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${data.performanceMetrics.averageEngagementRate}%</div>
+            <div class="metric-label">平均エンゲージメント率</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${data.performanceMetrics.uploadPattern.mostPopularDay}</div>
+            <div class="metric-label">人気投稿曜日</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-value">${data.performanceMetrics.uploadPattern.mostPopularHour}</div>
+            <div class="metric-label">人気投稿時間</div>
+          </div>
+        </div>
+        <div class="top-video-highlight">
+          <h5>🏆 最高パフォーマンス動画</h5>
+          <p><strong>${data.performanceMetrics.topPerformingVideo.title}</strong></p>
+          <p>${data.performanceMetrics.topPerformingVideo.statistics.viewCount.toLocaleString()}回再生</p>
+        </div>
+      `;
+    }
+    
+    // AI分析結果を表示
+    if (data.aiAnalysis && data.aiAnalysis.analysis) {
+      console.log('AI分析結果:', data.aiAnalysis.analysis); // デバッグ用
+      aiAnalysisText.innerHTML = `
+        <div class="ai-analysis-text">
+          ${data.aiAnalysis.analysis.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+        </div>
+      `;
+    } else {
+      aiAnalysisText.innerHTML = `
+        <div class="ai-analysis-text">
+          <p>AI分析結果の取得に失敗しました。</p>
+        </div>
+      `;
+    }
+    
+    // 動画アイデア提案を表示
+    if (data.videoIdeas && data.videoIdeas.ideas) {
+      console.log('動画アイデア:', data.videoIdeas.ideas); // デバッグ用
+      videoIdeasContainer.innerHTML = `
+        <div class="ai-analysis-text">
+          ${data.videoIdeas.ideas.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}
+        </div>
+      `;
+    } else {
+      videoIdeasContainer.innerHTML = `
+        <div class="ai-analysis-text">
+          <p>動画アイデアの生成に失敗しました。</p>
+        </div>
+      `;
+    }
+    
+    this.uiManager.showAIAnalysis();
+  }
+
+  displayAIVideoIdeas(data) {
+    const videoIdeasContainer = document.getElementById('video-ideas-container');
+    
+    if (data.ideas) {
+      videoIdeasContainer.innerHTML = `
+        <div class="ai-analysis-text">
+          ${data.ideas.replace(/\n/g, '<br>')}
+        </div>
+      `;
+    }
+    
+    this.uiManager.showAIAnalysis();
+  }
+
   showChannelResults() {
     this.uiManager.showResults();
   }
@@ -213,6 +407,7 @@ class YouTubeAnalyzerApp {
   resetForm() {
     this.dataRenderer.clearAnimations();
     this.chartManager.destroy();
+    this.contentIdeaManager.clear();
     this.uiManager.resetForm();
     this.currentData = null;
   }
@@ -221,6 +416,9 @@ class YouTubeAnalyzerApp {
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
   const app = new YouTubeAnalyzerApp();
+  
+  // Make content idea manager globally accessible for retry functionality
+  window.contentIdeaManager = app.contentIdeaManager;
   
   // Add input validation feedback
   const urlInput = document.getElementById('channelUrl');

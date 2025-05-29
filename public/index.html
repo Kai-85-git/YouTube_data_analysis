@@ -8,6 +8,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Suppress browser extension errors globally
+        window.addEventListener('error', function(event) {
+            if (event.message && (
+                event.message.includes('message port closed') ||
+                event.message.includes('Extension context invalidated') ||
+                event.message.includes('runtime.lastError')
+            )) {
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        // Suppress unhandled promise rejections from extensions
+        window.addEventListener('unhandledrejection', function(event) {
+            if (event.reason && event.reason.message && (
+                event.reason.message.includes('message port closed') ||
+                event.reason.message.includes('Extension context invalidated')
+            )) {
+                event.preventDefault();
+                return false;
+            }
+        });
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -190,6 +214,10 @@
                             <i class="fas fa-comments"></i>
                             動画コメント分析
                         </button>
+                        <button class="btn btn-ai" id="generateAIVideoIdeasBtn">
+                            <i class="fas fa-lightbulb"></i>
+                            AI動画アイデア
+                        </button>
                         <button class="btn btn-secondary" id="analyzeAnotherBtn">
                             <i class="fas fa-plus"></i>
                             別のチャンネルを分析
@@ -250,6 +278,62 @@
                             <h4><i class="fas fa-wrench"></i> 改善提案コメント</h4>
                             <div class="comments-list" id="improvementCommentsList">
                                 <!-- Improvement suggestions will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Content Ideas Section -->
+            <section class="content-ideas-section hidden" id="contentIdeasSection">
+                <div class="content-ideas-container">
+                    <div class="content-ideas-header">
+                        <h3><i class="fas fa-lightbulb"></i> 🎯 次の動画アイデア</h3>
+                        <button class="btn btn-secondary" id="backToResultsFromIdeasBtn">
+                            <i class="fas fa-arrow-left"></i>
+                            チャンネル分析に戻る
+                        </button>
+                    </div>
+                    
+                    <div id="content-ideas-container">
+                        <!-- Content ideas will be populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI Video Analysis Section -->
+            <section class="ai-analysis-section hidden" id="aiAnalysisSection">
+                <div class="ai-analysis-container">
+                    <div class="ai-analysis-header">
+                        <h3><i class="fas fa-robot"></i> 🤖 AI動画分析結果</h3>
+                        <button class="btn btn-secondary" id="backToResultsFromAIBtn">
+                            <i class="fas fa-arrow-left"></i>
+                            チャンネル分析に戻る
+                        </button>
+                    </div>
+                    
+                    <div class="ai-analysis-content">
+                        <!-- Performance Metrics -->
+                        <div class="analysis-card">
+                            <h4><i class="fas fa-chart-bar"></i> パフォーマンス指標</h4>
+                            <div id="performance-metrics">
+                                <!-- Metrics will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- AI Analysis -->
+                        <div class="analysis-card">
+                            <h4><i class="fas fa-brain"></i> AI分析</h4>
+                            <div id="ai-analysis-text">
+                                <!-- AI analysis will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Video Recommendations -->
+                        <div class="analysis-card">
+                            <h4><i class="fas fa-lightbulb"></i> 動画アイデア提案</h4>
+                            <div id="video-ideas-container">
+                                <!-- Video ideas will be populated here -->
                             </div>
                         </div>
                     </div>
