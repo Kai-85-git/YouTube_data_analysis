@@ -7,6 +7,7 @@ export class UIManager {
     this.loadingSection = document.getElementById('loadingSection');
     this.resultsSection = document.getElementById('resultsSection');
     this.errorSection = document.getElementById('errorSection');
+    this.commentsSection = document.getElementById('commentsSection');
     this.errorMessage = document.getElementById('errorMessage');
   }
 
@@ -34,10 +35,24 @@ export class UIManager {
     }, 100);
   }
 
+  showCommentsSection() {
+    this.hideAllSections();
+    this.commentsSection.classList.remove('hidden');
+    
+    // Smooth scroll to comments section
+    setTimeout(() => {
+      this.commentsSection.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 100);
+  }
+
   hideAllSections() {
     this.loadingSection.classList.add('hidden');
     this.resultsSection.classList.add('hidden');
     this.errorSection.classList.add('hidden');
+    this.commentsSection.classList.add('hidden');
   }
 
   showTemporaryMessage(message, type = 'info') {

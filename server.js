@@ -6,6 +6,8 @@ import { YouTubeAnalyzer } from './src/services/youtube-analyzer.js';
 import { validateApiKey, config } from './src/config/config.js';
 import { createErrorResponse } from './src/utils/errors.js';
 import { validateYouTubeUrl } from './src/utils/validators.js';
+import { YouTubeApiService } from './src/services/youtube-api.js';
+import { CommentAnalyzer } from './src/services/comment-analyzer.js';
 
 // Validate API key
 validateApiKey();
@@ -36,6 +38,8 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 const analyzer = new YouTubeAnalyzer();
+const youtubeApi = new YouTubeApiService();
+const commentAnalyzer = new CommentAnalyzer();
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -83,6 +87,48 @@ app.post('/api/analyze', async (req, res) => {
         
     } catch (error) {
         console.error(`[${new Date().toISOString()}] Analysis error:`, error);
+        
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
+app.post('/api/analyze-comments', async (req, res) => {
+    try {
+        const { channelId } = req.body;
+        
+        if (!channelId) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'チャンネルIDが必要です',
+                message: 'チャンネルIDを指定してください' 
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Analyzing comments for channel: ${channelId}`);
+        
+        const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
+        });
+        
+        const commentsPromise = youtubeApi.getChannelComments(channelId);
+        const comments = await Promise.race([commentsPromise, timeoutPromise]);
+        
+        const analysis = commentAnalyzer.analyzeComments(comments);
+        
+        console.log(`[${new Date().toISOString()}] Comment analysis completed successfully`);
+        
+        res.json({
+            success: true,
+            data: analysis
+        });
+        
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Comment analysis error:`, error);
         
         const errorResponse = createErrorResponse(error);
         res.status(errorResponse.statusCode).json({

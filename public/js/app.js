@@ -20,6 +20,8 @@ class YouTubeAnalyzerApp {
     this.analyzeAnotherBtn = document.getElementById('analyzeAnotherBtn');
     this.exportDataBtn = document.getElementById('exportDataBtn');
     this.retryBtn = document.getElementById('retryBtn');
+    this.analyzeCommentsBtn = document.getElementById('analyzeCommentsBtn');
+    this.backToResultsBtn = document.getElementById('backToResultsBtn');
   }
 
   bindEvents() {
@@ -27,6 +29,8 @@ class YouTubeAnalyzerApp {
     this.analyzeAnotherBtn.addEventListener('click', () => this.resetForm());
     this.exportDataBtn.addEventListener('click', () => this.exportData());
     this.retryBtn.addEventListener('click', () => this.resetForm());
+    this.analyzeCommentsBtn.addEventListener('click', () => this.analyzeComments());
+    this.backToResultsBtn.addEventListener('click', () => this.showChannelResults());
   }
 
   async handleSubmit(e) {
@@ -109,6 +113,101 @@ class YouTubeAnalyzerApp {
 
     // Show success message
     this.uiManager.showTemporaryMessage('データをエクスポートしました！', 'success');
+  }
+
+  async analyzeComments() {
+    if (!this.currentData || !this.currentData.channel) {
+      this.uiManager.showError('チャンネルデータが見つかりません');
+      return;
+    }
+
+    this.uiManager.showLoading();
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+      
+      const response = await fetch('/api/analyze-comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ channelId: this.currentData.channel.id }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
+        this.displayCommentsAnalysis(result.data);
+      } else {
+        this.uiManager.showError(result.error || 'コメント分析でエラーが発生しました');
+      }
+    } catch (error) {
+      console.error('Comment analysis error:', error);
+      const errorMessage = createClientErrorMessage(error);
+      this.uiManager.showError(errorMessage);
+    }
+  }
+
+  displayCommentsAnalysis(data) {
+    this.populateCommentsStatistics(data.statistics);
+    this.populateCommentsList(data.topComments, 'topCommentsList');
+    this.populateCommentsList(data.constructiveComments, 'constructiveCommentsList');
+    this.populateCommentsList(data.improvementComments, 'improvementCommentsList');
+    this.uiManager.showCommentsSection();
+  }
+
+  populateCommentsStatistics(stats) {
+    document.getElementById('totalCommentsAnalyzed').textContent = stats.totalComments.toLocaleString();
+    document.getElementById('averageLikes').textContent = stats.averageLikes.toLocaleString();
+    document.getElementById('maxLikes').textContent = stats.maxLikes.toLocaleString();
+  }
+
+  populateCommentsList(comments, containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!comments || comments.length === 0) {
+      container.innerHTML = '<p class="no-comments">該当するコメントがありません</p>';
+      return;
+    }
+
+    comments.forEach((comment, index) => {
+      const commentElement = document.createElement('div');
+      commentElement.className = 'comment-item';
+      commentElement.innerHTML = `
+        <div class="comment-header">
+          <img src="${comment.authorProfileImageUrl || '/images/default-avatar.png'}" 
+               alt="${comment.author}" class="comment-avatar">
+          <div class="comment-meta">
+            <span class="comment-author">${comment.author}</span>
+            <span class="comment-likes"><i class="fas fa-thumbs-up"></i> ${comment.likeCount}</span>
+          </div>
+        </div>
+        <div class="comment-content">
+          <p class="comment-text">${comment.text}</p>
+          <div class="comment-info">
+            <span class="comment-video">動画: ${comment.videoTitle}</span>
+            <span class="comment-date">${new Date(comment.publishedAt).toLocaleDateString('ja-JP')}</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(commentElement);
+    });
+  }
+
+  showChannelResults() {
+    this.uiManager.showResults();
   }
 
   resetForm() {

@@ -186,6 +186,10 @@
 
                     <!-- Action Buttons -->
                     <div class="action-buttons">
+                        <button class="btn btn-accent" id="analyzeCommentsBtn">
+                            <i class="fas fa-comments"></i>
+                            動画コメント分析
+                        </button>
                         <button class="btn btn-secondary" id="analyzeAnotherBtn">
                             <i class="fas fa-plus"></i>
                             別のチャンネルを分析
@@ -194,6 +198,60 @@
                             <i class="fas fa-download"></i>
                             データをエクスポート
                         </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Comments Analysis Section -->
+            <section class="comments-section hidden" id="commentsSection">
+                <div class="comments-container">
+                    <div class="comments-header">
+                        <h3><i class="fas fa-comments"></i> コメント分析結果</h3>
+                        <button class="btn btn-secondary" id="backToResultsBtn">
+                            <i class="fas fa-arrow-left"></i>
+                            チャンネル分析に戻る
+                        </button>
+                    </div>
+                    
+                    <div class="comments-analysis-grid">
+                        <div class="comments-stats-card">
+                            <h4><i class="fas fa-chart-bar"></i> コメント統計</h4>
+                            <div class="comments-stats">
+                                <div class="stat-item">
+                                    <span class="label">総コメント数:</span>
+                                    <span class="value" id="totalCommentsAnalyzed">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">平均いいね数:</span>
+                                    <span class="value" id="averageLikes">-</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="label">最高いいね数:</span>
+                                    <span class="value" id="maxLikes">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="top-comments-card">
+                            <h4><i class="fas fa-thumbs-up"></i> 人気コメント (いいね数順)</h4>
+                            <div class="comments-list" id="topCommentsList">
+                                <!-- Top comments will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="constructive-comments-card">
+                            <h4><i class="fas fa-lightbulb"></i> 建設的なコメント</h4>
+                            <div class="comments-list" id="constructiveCommentsList">
+                                <!-- Constructive comments will be populated here -->
+                            </div>
+                        </div>
+                        
+                        <div class="improvement-comments-card">
+                            <h4><i class="fas fa-wrench"></i> 改善提案コメント</h4>
+                            <div class="comments-list" id="improvementCommentsList">
+                                <!-- Improvement suggestions will be populated here -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>

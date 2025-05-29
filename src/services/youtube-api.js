@@ -104,4 +104,43 @@ export class YouTubeApiService {
       throw new YouTubeAnalyzerError(`Failed to get playlist videos: ${error.message}`, error.code);
     }
   }
+
+  async getVideoComments(videoId, maxResults = 100) {
+    try {
+      const response = await this.youtube.commentThreads.list({
+        part: 'snippet,replies',
+        videoId: videoId,
+        maxResults: maxResults,
+        order: 'relevance'
+      });
+      return response.data.items;
+    } catch (error) {
+      throw new YouTubeAnalyzerError(`Failed to get video comments: ${error.message}`, error.code);
+    }
+  }
+
+  async getChannelComments(channelId, maxResults = 200) {
+    try {
+      const uploadsPlaylistId = await this.getUploadsPlaylist(channelId);
+      const videos = await this.getPlaylistVideos(uploadsPlaylistId, 10);
+      
+      const allComments = [];
+      for (const video of videos) {
+        try {
+          const comments = await this.getVideoComments(video.snippet.resourceId.videoId, 20);
+          allComments.push(...comments.map(comment => ({
+            ...comment,
+            videoTitle: video.snippet.title,
+            videoId: video.snippet.resourceId.videoId
+          })));
+        } catch (error) {
+          console.warn(`Failed to get comments for video ${video.snippet.title}:`, error.message);
+        }
+      }
+      
+      return allComments;
+    } catch (error) {
+      throw new YouTubeAnalyzerError(`Failed to get channel comments: ${error.message}`, error.code);
+    }
+  }
 }
