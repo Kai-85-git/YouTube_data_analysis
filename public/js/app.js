@@ -2,7 +2,7 @@ import { UIManager } from './components/ui-manager.js';
 import { ChartManager } from './components/chart-manager.js';
 import { DataRenderer } from './components/data-renderer.js';
 import { ContentIdeaManager } from './components/content-idea-manager.js';
-import { createClientErrorMessage } from './utils/errors.js';
+import { createClientErrorMessage } from './utils/formatters.js';
 
 class YouTubeAnalyzerApp {
   constructor() {

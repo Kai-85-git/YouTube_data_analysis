@@ -1,11 +1,66 @@
+// 統合されたYouTubeサービス - チャンネル検索、動画取得、分析機能を統合
 import { YouTubeApiService } from './youtube-api.js';
+import { extractChannelInfo } from '../utils/validators.js';
+import { YouTubeAnalyzerError } from '../utils/errors.js';
 import { config } from '../config/config.js';
 
-export class AnalyticsService {
+export class YouTubeService {
   constructor() {
     this.apiService = new YouTubeApiService();
   }
 
+  // チャンネル検索機能
+  async findChannel(url) {
+    console.log(`Starting channel lookup for URL: ${url}`);
+    
+    const { type, value } = extractChannelInfo(url);
+    let channel;
+
+    console.log(`Extracted ${type}: ${value}`);
+
+    if (type === 'handle' || url.includes('/@') || url.includes('/c/') || url.includes('/user/')) {
+      console.log('Trying to get channel by handle...');
+      channel = await this.apiService.getChannelByHandle(value);
+      
+      if (!channel) {
+        console.log('Handle not found, searching...');
+        const searchResults = await this.apiService.searchChannels(value);
+        if (searchResults.length > 0) {
+          const channelId = searchResults[0].id.channelId;
+          channel = await this.apiService.getChannelById(channelId);
+        }
+      }
+    } else {
+      console.log('Getting channel by ID...');
+      channel = await this.apiService.getChannelById(value);
+    }
+
+    if (!channel) {
+      throw new YouTubeAnalyzerError('Channel not found', null, 404);
+    }
+
+    console.log(`Found channel: ${channel.snippet.title}`);
+    return channel;
+  }
+
+  // 最新動画取得
+  async getRecentVideos(channelId, maxResults = 10) {
+    try {
+      const videos = await this.apiService.getChannelVideos(channelId, maxResults);
+      return videos.map(video => ({
+        id: video.id.videoId,
+        title: video.snippet.title,
+        description: video.snippet.description,
+        publishedAt: video.snippet.publishedAt,
+        thumbnails: video.snippet.thumbnails
+      }));
+    } catch (error) {
+      console.error('Error getting recent videos:', error);
+      return [];
+    }
+  }
+
+  // トップ動画取得
   async getTopVideos(channelId, maxResults = config.youtube.maxResults.topVideos) {
     try {
       const uploadsPlaylistId = await this.apiService.getUploadsPlaylist(channelId);
@@ -52,6 +107,7 @@ export class AnalyticsService {
     }
   }
 
+  // チャンネル分析
   async getChannelAnalytics(channelId) {
     try {
       const uploadsPlaylistId = await this.apiService.getUploadsPlaylist(channelId);
@@ -76,11 +132,7 @@ export class AnalyticsService {
       });
 
       analytics.averageViews = Math.round(analytics.totalViews / videoStats.length);
-
-      // Calculate most popular upload day
       analytics.mostPopularDay = this.calculateMostPopularDay(videosResponse);
-      
-      // Calculate upload frequency
       analytics.uploadFrequency = this.calculateUploadFrequency(videosResponse);
 
       return analytics;
@@ -88,6 +140,52 @@ export class AnalyticsService {
       console.error('Analytics error:', error);
       return null;
     }
+  }
+
+  // 完全なチャンネル分析
+  async analyzeChannel(url) {
+    try {
+      console.log(`Starting analysis for URL: ${url}`);
+      
+      const channel = await this.findChannel(url);
+      
+      // 基本データを並行して取得
+      const [recentVideos, topVideos, analytics] = await Promise.allSettled([
+        this.getRecentVideos(channel.id),
+        this.getTopVideos(channel.id, 30),
+        this.getChannelAnalytics(channel.id)
+      ]);
+
+      const result = {
+        channel: this.formatChannelData(channel),
+        recentVideos: recentVideos.status === 'fulfilled' ? recentVideos.value : [],
+        topVideos: topVideos.status === 'fulfilled' ? topVideos.value.slice(0, 10) : [],
+        analytics: analytics.status === 'fulfilled' ? analytics.value : null
+      };
+
+      console.log('Analysis completed successfully');
+      return result;
+    } catch (error) {
+      console.error('Analysis error:', error);
+      throw new YouTubeAnalyzerError(`Analysis failed: ${error.message}`);
+    }
+  }
+
+  // ヘルパーメソッド
+  formatChannelData(channel) {
+    return {
+      id: channel.id,
+      title: channel.snippet.title,
+      description: channel.snippet.description,
+      publishedAt: channel.snippet.publishedAt,
+      thumbnails: channel.snippet.thumbnails,
+      customUrl: channel.snippet.customUrl,
+      statistics: {
+        viewCount: parseInt(channel.statistics.viewCount || 0),
+        subscriberCount: parseInt(channel.statistics.subscriberCount || 0),
+        videoCount: parseInt(channel.statistics.videoCount || 0)
+      }
+    };
   }
 
   calculateMostPopularDay(videos) {

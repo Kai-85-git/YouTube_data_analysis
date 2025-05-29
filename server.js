@@ -2,11 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { YouTubeAnalyzer } from './src/services/youtube-analyzer.js';
+import { YouTubeService } from './src/services/youtube-service.js';
 import { validateApiKey, config } from './src/config/config.js';
 import { createErrorResponse } from './src/utils/errors.js';
 import { validateYouTubeUrl } from './src/utils/validators.js';
-import { YouTubeApiService } from './src/services/youtube-api.js';
 import { CommentAnalyzer } from './src/services/comment-analyzer.js';
 import { ContentIdeaService } from './src/services/content-idea-service.js';
 import { VideoAnalysisService } from './src/services/video-analysis-service.js';
@@ -43,8 +42,7 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-const analyzer = new YouTubeAnalyzer();
-const youtubeApi = new YouTubeApiService();
+const youtubeService = new YouTubeService();
 const commentAnalyzer = new CommentAnalyzer();
 const contentIdeaService = new ContentIdeaService();
 const videoAnalysisService = new VideoAnalysisService();
@@ -82,7 +80,7 @@ app.post('/api/analyze', async (req, res) => {
         });
         
         const result = await Promise.race([
-            analyzer.analyzeChannel(url),
+            youtubeService.analyzeChannel(url),
             timeoutPromise
         ]);
         
@@ -123,7 +121,7 @@ app.post('/api/analyze-comments', async (req, res) => {
             setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
         });
         
-        const commentsPromise = youtubeApi.getChannelComments(channelId);
+        const commentsPromise = youtubeService.apiService.getChannelComments(channelId);
         const comments = await Promise.race([commentsPromise, timeoutPromise]);
         
         const analysis = commentAnalyzer.analyzeComments(comments);
@@ -252,11 +250,11 @@ app.post('/api/generate-content-ideas', async (req, res) => {
         let channelVideos = topVideos;
         
         if (!channelComments) {
-            channelComments = await youtubeApi.getChannelComments(channelId);
+            channelComments = await youtubeService.apiService.getChannelComments(channelId);
         }
         
         if (!channelVideos) {
-            const channelData = await youtubeApi.getChannelVideos(channelId);
+            const channelData = await youtubeService.apiService.getChannelVideos(channelId);
             channelVideos = channelData.slice(0, 10);
         }
         
