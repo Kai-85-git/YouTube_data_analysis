@@ -251,6 +251,19 @@ export class ContentIdeaManager {
             <div class="content-ideas-section">
                 <h2 class="section-title">🎯 次の動画アイデア</h2>
                 
+                <!-- カスタム動画アイデア生成 -->
+                <div class="custom-idea-generation">
+                    <h3 class="subsection-title">💡 カスタム動画アイデア生成</h3>
+                    <div class="custom-idea-form">
+                        <textarea id="customIdeaPrompt" placeholder="どんな動画を作りたいですか？例：「初心者向けのプログラミング解説動画」「料理の時短テクニック」など..." rows="3"></textarea>
+                        <button id="generateCustomIdea" class="generate-btn">
+                            <span class="btn-icon">🤖</span>
+                            アイデアを生成
+                        </button>
+                    </div>
+                    <div id="customIdeaResult" class="custom-idea-result"></div>
+                </div>
+                
                 <!-- 今すぐ作れる動画 -->
                 <div class="quick-ideas-section">
                     <h3 class="subsection-title">📹 今すぐ作れる動画（制作時間: 2-4時間）</h3>
@@ -397,6 +410,14 @@ export class ContentIdeaManager {
     }
 
     attachEventListeners() {
+        // カスタムアイデア生成ボタン
+        const generateBtn = document.getElementById('generateCustomIdea');
+        if (generateBtn) {
+            generateBtn.addEventListener('click', () => {
+                this.generateCustomVideoIdea();
+            });
+        }
+
         // 通常のアイデア採用ボタン
         document.querySelectorAll('.create-idea-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -690,6 +711,170 @@ export class ContentIdeaManager {
                 </div>
             `;
         }
+    }
+
+    async generateCustomVideoIdea() {
+        const promptInput = document.getElementById('customIdeaPrompt');
+        const resultContainer = document.getElementById('customIdeaResult');
+        const generateBtn = document.getElementById('generateCustomIdea');
+        
+        if (!promptInput || !promptInput.value.trim()) {
+            alert('動画のアイデアについて入力してください');
+            return;
+        }
+
+        const userPrompt = promptInput.value.trim();
+        
+        // ボタンを無効化してローディング状態に
+        generateBtn.disabled = true;
+        generateBtn.innerHTML = '<span class="loading-spinner-small"></span> 生成中...';
+        resultContainer.innerHTML = '<div class="generating-message">🤖 Gemini AIがアイデアを生成しています...</div>';
+
+        try {
+            const response = await fetch('/api/generate-custom-video-idea', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    prompt: userPrompt,
+                    channelContext: this.currentData // 現在のチャンネルデータがあれば送信
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                this.renderCustomIdeaResult(result.data);
+            } else {
+                resultContainer.innerHTML = `<div class="error-message">❌ ${result.error || 'アイデア生成に失敗しました'}</div>`;
+            }
+        } catch (error) {
+            console.error('Custom idea generation error:', error);
+            resultContainer.innerHTML = '<div class="error-message">❌ ネットワークエラーが発生しました</div>';
+        } finally {
+            // ボタンを元に戻す
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<span class="btn-icon">🤖</span> アイデアを生成';
+        }
+    }
+
+    renderCustomIdeaResult(ideaData) {
+        const resultContainer = document.getElementById('customIdeaResult');
+        
+        resultContainer.innerHTML = `
+            <div class="custom-idea-card">
+                <div class="custom-idea-header">
+                    <span class="ai-badge">🤖 Gemini AI生成</span>
+                    <h4 class="custom-idea-title">${ideaData.title}</h4>
+                </div>
+                <div class="custom-idea-content">
+                    <div class="idea-section">
+                        <h5>📝 コンセプト</h5>
+                        <p>${ideaData.concept}</p>
+                    </div>
+                    
+                    <div class="idea-section">
+                        <h5>🎯 ターゲット視聴者</h5>
+                        <p>${ideaData.targetAudience}</p>
+                    </div>
+                    
+                    <div class="idea-section">
+                        <h5>📋 動画の構成</h5>
+                        <ul class="structure-list">
+                            ${ideaData.structure.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="idea-section">
+                        <h5>💡 成功のポイント</h5>
+                        <ul class="key-points-list">
+                            ${ideaData.keyPoints.map(point => `<li>${point}</li>`).join('')}
+                        </ul>
+                    </div>
+                    
+                    <div class="idea-meta">
+                        <span class="meta-item">⏱️ 制作時間: ${ideaData.estimatedTime}</span>
+                        <span class="meta-item">📊 難易度: ${ideaData.difficulty}</span>
+                        <span class="meta-item">👁️ 予想視聴数: ${ideaData.estimatedViews}</span>
+                    </div>
+                    
+                    <div class="idea-tags">
+                        ${ideaData.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+                    </div>
+                    
+                    <div class="idea-actions">
+                        <button class="save-custom-idea-btn" data-idea="${encodeURIComponent(JSON.stringify(ideaData))}">
+                            💾 このアイデアを保存
+                        </button>
+                        <button class="regenerate-btn" onclick="document.getElementById('generateCustomIdea').click()">
+                            🔄 別のアイデアを生成
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // 保存ボタンのイベントリスナーを追加
+        const saveBtn = resultContainer.querySelector('.save-custom-idea-btn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', (e) => {
+                const ideaData = JSON.parse(decodeURIComponent(e.target.dataset.idea));
+                this.handleCustomIdeaSave(ideaData);
+            });
+        }
+    }
+
+    handleCustomIdeaSave(ideaData) {
+        // カスタムアイデア保存のモーダル表示
+        const modal = this.createCustomIdeaSaveModal(ideaData);
+        document.body.appendChild(modal);
+        modal.style.display = 'block';
+    }
+
+    createCustomIdeaSaveModal(idea) {
+        const modal = document.createElement('div');
+        modal.className = 'custom-idea-save-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>💾 カスタムアイデアを保存</h3>
+                <div class="modal-details">
+                    <h4>${idea.title}</h4>
+                    <div class="save-options">
+                        <label>
+                            <input type="checkbox" id="addToProductionList" checked>
+                            制作リストに追加
+                        </label>
+                        <label>
+                            <input type="checkbox" id="saveForLater">
+                            後で検討リストに保存
+                        </label>
+                    </div>
+                    <textarea placeholder="追加のメモやアイデア..." rows="3"></textarea>
+                    <div class="modal-buttons">
+                        <button class="btn-primary save-confirm">保存</button>
+                        <button class="btn-secondary">キャンセル</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        modal.querySelector('.close-modal').onclick = () => {
+            modal.remove();
+        };
+
+        modal.querySelector('.btn-secondary').onclick = () => {
+            modal.remove();
+        };
+
+        modal.querySelector('.save-confirm').onclick = () => {
+            // 保存処理（実際の実装では、バックエンドに送信など）
+            alert('アイデアを保存しました！');
+            modal.remove();
+        };
+
+        return modal;
     }
 
     retry() {

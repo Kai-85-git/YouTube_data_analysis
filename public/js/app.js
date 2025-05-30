@@ -389,20 +389,28 @@ class YouTubeAnalyzerApp {
       `;
     }
     
-    // 動画アイデア提案を表示
-    if (data.videoIdeas && data.videoIdeas.ideas) {
-      console.log('動画アイデア:', data.videoIdeas.ideas); // デバッグ用
-      videoIdeasContainer.innerHTML = `
-        <div class="ai-analysis-text">
-          ${this.formatAIText(data.videoIdeas.ideas)}
-        </div>
-      `;
-    } else {
-      videoIdeasContainer.innerHTML = `
-        <div class="ai-analysis-text">
-          <p>動画アイデアの生成に失敗しました。</p>
-        </div>
-      `;
+    // 動画アイデア提案セクションをインタラクティブに変更
+    this.currentAIAnalysisData = data; // AI分析データを保存
+    videoIdeasContainer.innerHTML = `
+      <div class="custom-video-idea-form">
+        <p class="form-description">チャンネル分析結果を基に、作りたい動画のアイデアを入力してください。Gemini AIが最適な動画企画を提案します。</p>
+        <textarea 
+          id="aiVideoIdeaPrompt" 
+          placeholder="例：「初心者向けのReact解説動画」「最新のNext.js機能を使ったチュートリアル」「視聴者からの質問に答えるQ&A動画」など..." 
+          rows="3"
+        ></textarea>
+        <button id="generateAIVideoIdea" class="generate-btn">
+          <span class="btn-icon">🤖</span>
+          AIに動画アイデアを提案してもらう
+        </button>
+        <div id="aiVideoIdeaResult" class="ai-video-idea-result"></div>
+      </div>
+    `;
+    
+    // イベントリスナーを追加
+    const generateBtn = document.getElementById('generateAIVideoIdea');
+    if (generateBtn) {
+      generateBtn.addEventListener('click', () => this.generateCustomAIVideoIdea());
     }
     
     this.uiManager.showAIAnalysis();
@@ -420,6 +428,127 @@ class YouTubeAnalyzerApp {
     }
     
     this.uiManager.showAIAnalysis();
+  }
+
+  async generateCustomAIVideoIdea() {
+    const promptInput = document.getElementById('aiVideoIdeaPrompt');
+    const resultContainer = document.getElementById('aiVideoIdeaResult');
+    const generateBtn = document.getElementById('generateAIVideoIdea');
+    
+    if (!promptInput || !promptInput.value.trim()) {
+      alert('動画のアイデアについて入力してください');
+      return;
+    }
+
+    const userPrompt = promptInput.value.trim();
+    
+    // ボタンを無効化してローディング状態に
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="loading-spinner-small"></span> 生成中...';
+    resultContainer.innerHTML = '<div class="generating-message">🤖 チャンネル分析結果を基にアイデアを生成しています...</div>';
+
+    try {
+      // 必要最小限のデータのみを抽出
+      const minimalAnalysisData = {
+        performanceMetrics: {
+          averageViews: this.currentAIAnalysisData?.performanceMetrics?.averageViews,
+          averageLikes: this.currentAIAnalysisData?.performanceMetrics?.averageLikes,
+          averageEngagementRate: this.currentAIAnalysisData?.performanceMetrics?.averageEngagementRate,
+          uploadPattern: this.currentAIAnalysisData?.performanceMetrics?.uploadPattern,
+          topPerformingVideo: {
+            title: this.currentAIAnalysisData?.performanceMetrics?.topPerformingVideo?.title
+          }
+        }
+      };
+
+      const response = await fetch('/api/generate-ai-channel-video-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: userPrompt,
+          channelId: this.currentData.channel.id,
+          analysisData: minimalAnalysisData // 最小限のデータのみ送信
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        this.renderAIVideoIdeaResult(result.data);
+      } else {
+        resultContainer.innerHTML = `<div class="error-message">❌ ${result.error || 'アイデア生成に失敗しました'}</div>`;
+      }
+    } catch (error) {
+      console.error('AI video idea generation error:', error);
+      resultContainer.innerHTML = '<div class="error-message">❌ ネットワークエラーが発生しました</div>';
+    } finally {
+      // ボタンを元に戻す
+      generateBtn.disabled = false;
+      generateBtn.innerHTML = '<span class="btn-icon">🤖</span> AIに動画アイデアを提案してもらう';
+    }
+  }
+
+  renderAIVideoIdeaResult(ideaData) {
+    const resultContainer = document.getElementById('aiVideoIdeaResult');
+    
+    resultContainer.innerHTML = `
+      <div class="ai-video-idea-card">
+        <div class="ai-idea-header">
+          <span class="ai-badge">🤖 Gemini AI提案</span>
+          <h4 class="ai-idea-title">${ideaData.title}</h4>
+        </div>
+        <div class="ai-idea-content">
+          <div class="idea-section">
+            <h5>📝 動画コンセプト</h5>
+            <p>${ideaData.concept}</p>
+          </div>
+          
+          <div class="idea-section">
+            <h5>🎯 なぜこの動画がおすすめか</h5>
+            <p>${ideaData.reasoning}</p>
+          </div>
+          
+          <div class="idea-section">
+            <h5>📊 期待される成果</h5>
+            <ul class="performance-expectations">
+              ${ideaData.expectedPerformance.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+          
+          <div class="idea-section">
+            <h5>📋 動画構成案</h5>
+            <ul class="video-structure">
+              ${ideaData.structure.map(item => `<li>${item}</li>`).join('')}
+            </ul>
+          </div>
+          
+          <div class="idea-section">
+            <h5>💡 成功のポイント</h5>
+            <ul class="success-tips">
+              ${ideaData.successTips.map(tip => `<li>${tip}</li>`).join('')}
+            </ul>
+          </div>
+          
+          <div class="idea-meta">
+            <span class="meta-item">⏱️ 推奨時間: ${ideaData.recommendedLength}</span>
+            <span class="meta-item">📅 最適な投稿日: ${ideaData.bestUploadTime}</span>
+            <span class="meta-item">🎨 サムネイル案: ${ideaData.thumbnailSuggestion}</span>
+          </div>
+          
+          <div class="idea-tags">
+            ${ideaData.suggestedTags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
+          </div>
+          
+          <div class="idea-actions">
+            <button class="regenerate-ai-btn" onclick="document.getElementById('generateAIVideoIdea').click()">
+              🔄 別のアイデアを生成
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   showChannelResults() {

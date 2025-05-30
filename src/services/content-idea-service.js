@@ -307,4 +307,226 @@ ${channelTheme}
       ]
     };
   }
+
+  async generateCustomVideoIdea(userPrompt, channelContext = null) {
+    try {
+      const systemPrompt = `あなたはYouTubeの動画企画の専門家です。
+ユーザーのリクエストに基づいて、具体的で実践的な動画アイデアを生成してください。
+
+必ず以下のJSON形式で回答してください：
+{
+  "title": "動画のタイトル（魅力的で具体的に）",
+  "concept": "動画のコンセプト（100文字程度で説明）",
+  "targetAudience": "ターゲット視聴者層",
+  "structure": [
+    "1. イントロ部分の内容",
+    "2. メインコンテンツ1",
+    "3. メインコンテンツ2",
+    "4. まとめ部分"
+  ],
+  "keyPoints": [
+    "成功のポイント1",
+    "成功のポイント2",
+    "成功のポイント3"
+  ],
+  "estimatedTime": "制作時間の目安",
+  "difficulty": "難易度（易/中/難）",
+  "estimatedViews": "予想視聴数（例：現在の平均×1.5）",
+  "tags": ["タグ1", "タグ2", "タグ3"]
+}`;
+
+      let contextInfo = "";
+      if (channelContext) {
+        contextInfo = `
+チャンネル情報:
+- 現在の視聴者ニーズ: ${JSON.stringify(channelContext.viewerNeeds || {})}
+- 成功パターン: ${JSON.stringify(channelContext.patterns || {})}
+`;
+      }
+
+      const prompt = `${systemPrompt}
+
+${contextInfo}
+
+ユーザーのリクエスト: ${userPrompt}
+
+上記のリクエストに基づいて、具体的で実践的な動画アイデアを生成してください。`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // JSONを抽出してパース
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('AI応答からJSONを抽出できませんでした');
+      }
+
+      const customIdea = JSON.parse(jsonMatch[0]);
+      
+      // デフォルト値の設定
+      return {
+        title: customIdea.title || "カスタム動画アイデア",
+        concept: customIdea.concept || "ユーザーリクエストに基づく動画",
+        targetAudience: customIdea.targetAudience || "一般視聴者",
+        structure: customIdea.structure || ["イントロ", "メインコンテンツ", "まとめ"],
+        keyPoints: customIdea.keyPoints || ["ポイント1", "ポイント2", "ポイント3"],
+        estimatedTime: customIdea.estimatedTime || "2-4時間",
+        difficulty: customIdea.difficulty || "中",
+        estimatedViews: customIdea.estimatedViews || "現在の平均×1.2",
+        tags: customIdea.tags || ["動画", "YouTube"]
+      };
+
+    } catch (error) {
+      console.error('カスタム動画アイデア生成エラー:', error);
+      
+      // フォールバック
+      return {
+        title: `${userPrompt}に関する動画`,
+        concept: "ユーザーのリクエストに基づいた動画企画",
+        targetAudience: "興味のある視聴者",
+        structure: [
+          "1. 導入・概要説明",
+          "2. メインコンテンツの詳細解説",
+          "3. 実例・デモンストレーション",
+          "4. まとめと次回予告"
+        ],
+        keyPoints: [
+          "視聴者のニーズに応える内容にする",
+          "わかりやすい説明を心がける",
+          "実践的な情報を提供する"
+        ],
+        estimatedTime: "3-5時間",
+        difficulty: "中",
+        estimatedViews: "現在の平均×1.3",
+        tags: ["カスタム", "リクエスト", "動画企画"]
+      };
+    }
+  }
+
+  async generateAIChannelVideoIdea(userPrompt, channelId, analysisData = null) {
+    try {
+      // チャンネルの詳細情報を含む高度なプロンプト
+      const systemPrompt = `あなたはYouTubeチャンネルの成長戦略専門家です。
+チャンネルの分析データを基に、ユーザーのリクエストに最適な動画アイデアを提案してください。
+
+必ず以下のJSON形式で回答してください：
+{
+  "title": "具体的で魅力的な動画タイトル",
+  "concept": "動画のコンセプト（チャンネルの特性を考慮した100文字程度の説明）",
+  "reasoning": "なぜこの動画がこのチャンネルに適しているかの理由",
+  "expectedPerformance": [
+    "期待される成果1（具体的な数値や効果）",
+    "期待される成果2",
+    "期待される成果3"
+  ],
+  "structure": [
+    "1. オープニング（0:00-0:30）: 内容",
+    "2. メインコンテンツ1（0:30-5:00）: 内容",
+    "3. メインコンテンツ2（5:00-10:00）: 内容",
+    "4. まとめ（10:00-12:00）: 内容"
+  ],
+  "successTips": [
+    "このチャンネルの視聴者に響くポイント1",
+    "成功のための具体的なアドバイス2",
+    "チャンネルの強みを活かす方法3"
+  ],
+  "recommendedLength": "推奨動画時間（例：10-15分）",
+  "bestUploadTime": "最適な投稿タイミング（曜日・時間帯）",
+  "thumbnailSuggestion": "効果的なサムネイルの提案",
+  "suggestedTags": ["タグ1", "タグ2", "タグ3", "タグ4", "タグ5"]
+}`;
+
+      let channelAnalysisInfo = "";
+      if (analysisData) {
+        channelAnalysisInfo = `
+チャンネル分析データ:
+- 平均再生回数: ${analysisData.performanceMetrics?.averageViews || '不明'}
+- 平均いいね数: ${analysisData.performanceMetrics?.averageLikes || '不明'}
+- エンゲージメント率: ${analysisData.performanceMetrics?.averageEngagementRate || '不明'}%
+- 人気投稿曜日: ${analysisData.performanceMetrics?.uploadPattern?.mostPopularDay || '不明'}
+- 人気投稿時間: ${analysisData.performanceMetrics?.uploadPattern?.mostPopularHour || '不明'}
+- トップ動画: ${analysisData.performanceMetrics?.topPerformingVideo?.title || '不明'}
+- AI分析結果: ${analysisData.aiAnalysis?.analysis ? '利用可能' : '利用不可'}
+`;
+      }
+
+      const prompt = `${systemPrompt}
+
+${channelAnalysisInfo}
+
+ユーザーのリクエスト: ${userPrompt}
+
+チャンネルの分析データを考慮し、このチャンネルの視聴者層と過去の成功パターンに合わせた、具体的で実践的な動画アイデアを生成してください。`;
+
+      const result = await this.model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // JSONを抽出してパース
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('AI応答からJSONを抽出できませんでした');
+      }
+
+      const aiIdea = JSON.parse(jsonMatch[0]);
+      
+      // デフォルト値の設定と検証
+      return {
+        title: aiIdea.title || "チャンネル最適化動画アイデア",
+        concept: aiIdea.concept || "チャンネル分析に基づく動画企画",
+        reasoning: aiIdea.reasoning || "このチャンネルの視聴者に適した内容です",
+        expectedPerformance: aiIdea.expectedPerformance || [
+          "視聴者エンゲージメントの向上",
+          "新規視聴者の獲得",
+          "既存視聴者の満足度向上"
+        ],
+        structure: aiIdea.structure || [
+          "1. イントロダクション",
+          "2. メインコンテンツ",
+          "3. 実例・デモ",
+          "4. まとめと次回予告"
+        ],
+        successTips: aiIdea.successTips || [
+          "視聴者のニーズに応える",
+          "チャンネルの特色を活かす",
+          "エンゲージメントを促す"
+        ],
+        recommendedLength: aiIdea.recommendedLength || "10-15分",
+        bestUploadTime: aiIdea.bestUploadTime || analysisData?.performanceMetrics?.uploadPattern?.mostPopularDay || "金曜日 19:00",
+        thumbnailSuggestion: aiIdea.thumbnailSuggestion || "目を引くビジュアルとテキスト",
+        suggestedTags: aiIdea.suggestedTags || ["動画", "YouTube", userPrompt.split(' ')[0]]
+      };
+
+    } catch (error) {
+      console.error('AIチャンネル動画アイデア生成エラー:', error);
+      
+      // フォールバック
+      return {
+        title: `${userPrompt}に関する動画`,
+        concept: "チャンネル分析を基にした動画企画",
+        reasoning: "このチャンネルの視聴者層に適したコンテンツです",
+        expectedPerformance: [
+          "現在の平均視聴数を上回る可能性",
+          "コメント数の増加が期待できる",
+          "チャンネル登録者の増加につながる"
+        ],
+        structure: [
+          "1. 導入（0:00-1:00）: 視聴者の興味を引く",
+          "2. 本編（1:00-8:00）: メインコンテンツの展開",
+          "3. 実践（8:00-10:00）: 具体例やデモンストレーション",
+          "4. まとめ（10:00-12:00）: 要点整理と次回予告"
+        ],
+        successTips: [
+          "過去の人気動画の要素を取り入れる",
+          "視聴者からのコメントに応える内容にする",
+          "チャンネルの独自性を前面に出す"
+        ],
+        recommendedLength: "10-15分",
+        bestUploadTime: "金曜日 19:00-21:00",
+        thumbnailSuggestion: "明るい色使いで視認性の高いデザイン",
+        suggestedTags: ["動画企画", "YouTube", "コンテンツ制作"]
+      };
+    }
+  }
 }
