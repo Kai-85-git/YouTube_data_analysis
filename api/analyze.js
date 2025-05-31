@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   const { YouTubeService } = await import('../src/services/youtube-service.js');
-  const { validateURL } = await import('../src/utils/validators.js');
+  const { validateYouTubeUrl } = await import('../src/utils/validators.js');
   const { createErrorResponse } = await import('../src/utils/errors.js');
 
   try {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const validation = validateURL(url);
+    const validation = validateYouTubeUrl(url);
     if (!validation.isValid) {
       return res.status(400).json({
         success: false,
@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     }
 
     const youtubeService = new YouTubeService();
-    const channelData = await youtubeService.getChannelData(url);
+    const channelData = await youtubeService.analyzeChannel(url);
 
     res.status(200).json({
       success: true,
