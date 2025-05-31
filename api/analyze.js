@@ -3,11 +3,19 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { YouTubeService } = await import('../src/services/youtube-service.js');
-  const { validateYouTubeUrl } = await import('../src/utils/validators.js');
-  const { createErrorResponse } = await import('../src/utils/errors.js');
-
   try {
+    // Check if API keys are configured
+    if (!process.env.YOUTUBE_API_KEY || !process.env.GEMINI_API_KEY) {
+      return res.status(500).json({
+        success: false,
+        error: 'API keys are not configured',
+        message: 'サーバーの設定に問題があります。管理者にお問い合わせください。'
+      });
+    }
+
+    const { YouTubeService } = await import('../src/services/youtube-service.js');
+    const { validateYouTubeUrl } = await import('../src/utils/validators.js');
+    const { createErrorResponse } = await import('../src/utils/errors.js');
     const { url } = req.body;
 
     if (!url) {

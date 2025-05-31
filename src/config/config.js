@@ -34,7 +34,10 @@ export function validateApiKey() {
     console.error('   2. Get your API key from: https://console.developers.google.com/');
     console.error('   3. Add your API key to the .env file');
     console.error('   4. Restart the application');
-    process.exit(1);
+    if (typeof process !== 'undefined' && process.exit) {
+      process.exit(1);
+    }
+    throw new Error('YouTube API key is not configured');
   }
   
   if (!config.gemini.apiKey) {
@@ -43,7 +46,10 @@ export function validateApiKey() {
     console.error('   1. Get your API key from: https://aistudio.google.com/app/apikey');
     console.error('   2. Add GEMINI_API_KEY to your .env file');
     console.error('   3. Restart the application');
-    process.exit(1);
+    if (typeof process !== 'undefined' && process.exit) {
+      process.exit(1);
+    }
+    throw new Error('Gemini API key is not configured');
   }
   
   return config.youtube.apiKey;
