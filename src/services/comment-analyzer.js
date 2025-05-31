@@ -137,4 +137,16 @@ export class CommentAnalyzer {
       totalLikes
     };
   }
+  
+  async analyzeChannelComments(channelId) {
+    try {
+      const { YouTubeApiService } = await import('./youtube-api.js');
+      const apiService = new YouTubeApiService();
+      
+      const comments = await apiService.getChannelComments(channelId);
+      return this.analyzeComments(comments);
+    } catch (error) {
+      throw new YouTubeAnalyzerError(`Failed to analyze channel comments: ${error.message}`, null);
+    }
+  }
 }

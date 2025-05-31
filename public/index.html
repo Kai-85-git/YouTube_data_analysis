@@ -90,9 +90,7 @@
             <!-- Loading Section -->
             <section class="loading-section hidden" id="loadingSection">
                 <div class="loading-container">
-                    <div class="loading-spinner">
-                        <div class="spinner"></div>
-                    </div>
+                    <div class="spinner"></div>
                     <h3>チャンネルを分析中...</h3>
                     <p>データを取得しています</p>
                 </div>
@@ -241,6 +239,22 @@
                         </button>
                     </div>
                     
+                    <!-- Video Selection Section -->
+                    <div class="video-selection-section" id="videoSelectionSection">
+                        <h4><i class="fas fa-video"></i> 動画を選択してコメント分析</h4>
+                        <div class="video-selection-form">
+                            <div class="input-group">
+                                <select id="videoSelect" class="video-select">
+                                    <option value="">動画を選択してください...</option>
+                                </select>
+                                <button type="button" class="analyze-btn" id="analyzeVideoCommentsBtn">
+                                    <i class="fas fa-search"></i>
+                                    <span>開始</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="comments-analysis-grid">
                         <div class="comments-stats-card">
                             <h4><i class="fas fa-chart-bar"></i> コメント統計</h4>
@@ -256,6 +270,25 @@
                                 <div class="stat-item">
                                     <span class="label">最高いいね数:</span>
                                     <span class="value" id="maxLikes">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Analysis Summary -->
+                        <div class="ai-summary-card hidden" id="aiSummaryCard">
+                            <h4><i class="fas fa-robot"></i> AI分析サマリー</h4>
+                            <div class="ai-summary-content">
+                                <div class="summary-item">
+                                    <span class="label">全体的な感情:</span>
+                                    <span class="value" id="overallSentiment">-</span>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">主要テーマ:</span>
+                                    <div class="tags" id="keyThemes">-</div>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="label">視聴者の洞察:</span>
+                                    <p class="insights" id="audienceInsights">-</p>
                                 </div>
                             </div>
                         </div>
