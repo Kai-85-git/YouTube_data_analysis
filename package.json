@@ -2,12 +2,12 @@
   "name": "youtube-channel-analyzer",
   "version": "1.0.0",
   "description": "YouTube channel analysis tool using YouTube Data API",
-  "main": "server-refactored.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node server-refactored.js",
-    "start:legacy": "node server.js",
-    "dev": "node server-refactored.js",
-    "dev:legacy": "node server.js",
+    "start": "node server.js",
+    "start:refactored": "node server-refactored.js",
+    "dev": "node server.js",
+    "dev:refactored": "node server-refactored.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

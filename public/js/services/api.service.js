@@ -61,7 +61,7 @@ export class ApiService {
 
     // チャンネル分析
     async analyzeChannel(url) {
-        return this.requestWithTimeout('/analyze', {
+        return this.requestWithTimeout('/channel/analyze', {
             method: 'POST',
             body: JSON.stringify({ url }),
         });
@@ -69,58 +69,58 @@ export class ApiService {
 
     // コメント分析
     async analyzeComments(channelId) {
-        return this.requestWithTimeout('/comment-analysis', {
+        return this.requestWithTimeout('/analysis/comments', {
             method: 'POST',
-            body: JSON.stringify({ type: 'channel', id: channelId }),
+            body: JSON.stringify({ channelId }),
         }, 60000);
     }
 
     // 動画パフォーマンス分析
     async analyzeVideoPerformance(channelId, maxVideos = 30) {
-        return this.requestWithTimeout('/video-analysis', {
+        return this.requestWithTimeout('/analysis/video-performance', {
             method: 'POST',
-            body: JSON.stringify({ action: 'analyze-performance', channelId, maxVideos }),
+            body: JSON.stringify({ channelId, maxVideos }),
         });
     }
 
     // コンテンツアイデア生成
     async generateContentIdeas(channelId, comments = null, topVideos = null) {
-        return this.requestWithTimeout('/content-generation', {
+        return this.requestWithTimeout('/ideas/generate', {
             method: 'POST',
-            body: JSON.stringify({ action: 'generate-ideas', channelId, comments, topVideos }),
+            body: JSON.stringify({ channelId, comments, topVideos }),
         });
     }
 
     // カスタム動画アイデア生成
     async generateCustomVideoIdea(prompt, channelContext = null) {
-        return this.requestWithTimeout('/content-generation', {
+        return this.requestWithTimeout('/ideas/custom', {
             method: 'POST',
-            body: JSON.stringify({ action: 'generate-custom-idea', prompt, channelId: channelContext?.channelId }),
+            body: JSON.stringify({ prompt, channelContext }),
         });
     }
 
     // AIチャンネル動画アイデア生成
     async generateAIChannelVideoIdea(prompt, channelId, analysisData) {
-        return this.requestWithTimeout('/video-analysis', {
+        return this.requestWithTimeout('/ideas/ai-channel', {
             method: 'POST',
-            body: JSON.stringify({ action: 'generate-custom-idea', prompt, channelId, analysisData }),
+            body: JSON.stringify({ prompt, channelId, analysisData }),
         });
     }
 
     // AI動画アイデア生成
     async generateAIVideoIdeas(channelId, specificTopic = null) {
-        return this.requestWithTimeout('/video-analysis', {
+        return this.requestWithTimeout('/ideas/ai-video', {
             method: 'POST',
-            body: JSON.stringify({ action: 'generate-ideas', channelId }),
+            body: JSON.stringify({ channelId, specificTopic }),
         });
     }
 
-    // 動画コメント分析
-    async analyzeVideoComments(videoId) {
-        return this.requestWithTimeout('/comment-analysis', {
+    // コメントベースのコンテンツアイデア生成
+    async generateContentIdeasFromComments(commentAnalysisData, channelVideos) {
+        return this.requestWithTimeout('/ideas/from-comments', {
             method: 'POST',
-            body: JSON.stringify({ type: 'video', id: videoId }),
-        }, 60000);
+            body: JSON.stringify({ commentAnalysisData, channelVideos }),
+        });
     }
 }
 

@@ -66,7 +66,7 @@ export class YouTubeApiService {
   async getVideoStatistics(videoIds) {
     try {
       const response = await this.youtube.videos.list({
-        part: 'statistics,contentDetails',
+        part: 'statistics,contentDetails,snippet',
         id: videoIds.join(',')
       });
       return response.data.items;

@@ -38,23 +38,3 @@ export function truncateText(text, maxLength = 300) {
   if (!text) return '';
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 }
-
-export function getThumbnailUrl(thumbnails, preference = ['high', 'medium', 'default']) {
-  for (const quality of preference) {
-    if (thumbnails?.[quality]?.url) {
-      return thumbnails[quality].url;
-    }
-  }
-  return 'https://via.placeholder.com/320x180?text=No+Image';
-}
-
-export function formatApiResponse(success, data = null, error = null) {
-  if (success) {
-    return { success: true, data };
-  }
-  return {
-    success: false,
-    error: error.message || error,
-    ...(error.details && { details: error.details }),
-  };
-}
