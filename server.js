@@ -9,7 +9,6 @@ import { validateYouTubeUrl } from './src/utils/validators.js';
 import { CommentAnalyzer } from './src/services/comment-analyzer.js';
 import { ContentIdeaService } from './src/services/content-idea-service.js';
 import { VideoAnalysisService } from './src/services/video-analysis-service.js';
-import { GeminiCommentAnalyzer } from './src/services/gemini-comment-analyzer.js';
 
 // Validate API key
 validateApiKey();
@@ -48,7 +47,6 @@ const youtubeService = new YouTubeService();
 const commentAnalyzer = new CommentAnalyzer();
 const contentIdeaService = new ContentIdeaService();
 const videoAnalysisService = new VideoAnalysisService();
-const geminiCommentAnalyzer = new GeminiCommentAnalyzer();
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -148,59 +146,6 @@ app.post('/api/analyze-comments', async (req, res) => {
     }
 });
 
-app.post('/api/analyze-video-comments', async (req, res) => {
-    try {
-        const { videoId } = req.body;
-        
-        if (!videoId) {
-            return res.status(400).json({ 
-                success: false,
-                error: '動画IDが必要です',
-                message: '動画IDを指定してください' 
-            });
-        }
-
-        console.log(`[${new Date().toISOString()}] Analyzing comments for video: ${videoId}`);
-        
-        const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
-        });
-        
-        // Get comments for the specific video
-        const commentsPromise = youtubeService.apiService.getVideoComments(videoId, 100);
-        const comments = await Promise.race([commentsPromise, timeoutPromise]);
-        
-        // Get video info
-        const videoInfoPromise = youtubeService.apiService.getVideoStatistics([videoId]);
-        const videoInfo = await Promise.race([videoInfoPromise, timeoutPromise]);
-        const videoTitle = videoInfo[0]?.snippet?.title || '動画';
-        
-        // Use Gemini to analyze comments
-        const analysisPromise = geminiCommentAnalyzer.analyzeVideoComments(comments, videoTitle);
-        const analysis = await Promise.race([analysisPromise, timeoutPromise]);
-        
-        console.log(`[${new Date().toISOString()}] Video comment analysis with Gemini completed successfully`);
-        
-        res.json({
-            success: true,
-            data: {
-                ...analysis,
-                videoTitle: videoTitle,
-                videoId: videoId
-            }
-        });
-        
-    } catch (error) {
-        console.error(`[${new Date().toISOString()}] Video comment analysis error:`, error);
-        
-        const errorResponse = createErrorResponse(error);
-        res.status(errorResponse.statusCode).json({
-            success: false,
-            error: errorResponse.error,
-            details: errorResponse.details
-        });
-    }
-});
 
 app.post('/api/analyze-video-performance', async (req, res) => {
     try {

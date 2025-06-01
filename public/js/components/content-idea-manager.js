@@ -693,7 +693,7 @@ export class ContentIdeaManager {
         if (container) {
             container.innerHTML = `
                 <div class="loading-state">
-                    <div class="spinner"></div>
+                    <div class="loading-spinner"></div>
                     <p>🤖 AI が動画アイデアを生成しています...</p>
                     <small>コメント分析とトレンド分析を実行中</small>
                 </div>

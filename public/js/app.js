@@ -29,10 +29,6 @@ class YouTubeAnalyzerApp {
     this.backToResultsFromIdeasBtn = document.getElementById('backToResultsFromIdeasBtn');
     this.generateAIVideoIdeasBtn = document.getElementById('generateAIVideoIdeasBtn');
     this.backToResultsFromAIBtn = document.getElementById('backToResultsFromAIBtn');
-    
-    // Video selection elements
-    this.videoSelect = document.getElementById('videoSelect');
-    this.analyzeVideoCommentsBtn = document.getElementById('analyzeVideoCommentsBtn');
   }
 
   bindEvents() {
@@ -42,11 +38,6 @@ class YouTubeAnalyzerApp {
     this.retryBtn.addEventListener('click', () => this.resetForm());
     this.analyzeCommentsBtn.addEventListener('click', () => this.analyzeComments());
     this.backToResultsBtn.addEventListener('click', () => this.showChannelResults());
-    
-    // Video selection event listener
-    if (this.analyzeVideoCommentsBtn) {
-      this.analyzeVideoCommentsBtn.addEventListener('click', () => this.analyzeVideoComments());
-    }
     
     // 条件付きでイベントリスナーを追加
     if (this.generateIdeasBtn) {
@@ -193,171 +184,7 @@ class YouTubeAnalyzerApp {
     this.populateCommentsList(data.topComments, 'topCommentsList');
     this.populateCommentsList(data.constructiveComments, 'constructiveCommentsList');
     this.populateCommentsList(data.improvementComments, 'improvementCommentsList');
-    
-    // Populate video dropdown
-    this.populateVideoDropdown();
-    
     this.uiManager.showCommentsSection();
-  }
-  
-  populateVideoDropdown() {
-    if (!this.currentData || !this.currentData.topVideos) return;
-    
-    this.videoSelect.innerHTML = '<option value="">動画を選択してください...</option>';
-    
-    // Helper function to truncate title
-    const truncateTitle = (title, maxLength = 50) => {
-      if (title.length <= maxLength) return title;
-      return title.substring(0, maxLength) + '...';
-    };
-    
-    // Add top videos to dropdown
-    this.currentData.topVideos.forEach(video => {
-      const option = document.createElement('option');
-      option.value = video.id;
-      const truncatedTitle = truncateTitle(video.title);
-      option.textContent = `${truncatedTitle} (再生数: ${video.statistics.viewCount.toLocaleString()})`;
-      option.title = video.title; // Full title on hover
-      this.videoSelect.appendChild(option);
-    });
-    
-    // Also add recent videos if available
-    if (this.currentData.recentVideos) {
-      this.currentData.recentVideos.forEach(video => {
-        // Check if video is not already in dropdown
-        if (!this.currentData.topVideos.find(v => v.id === video.id)) {
-          const option = document.createElement('option');
-          option.value = video.id;
-          option.textContent = truncateTitle(video.title);
-          option.title = video.title; // Full title on hover
-          this.videoSelect.appendChild(option);
-        }
-      });
-    }
-  }
-  
-  async analyzeVideoComments() {
-    const videoId = this.videoSelect.value;
-    if (!videoId) {
-      this.showTempMessage('動画を選択してください', 'error');
-      return;
-    }
-    
-    this.showTempMessage('動画のコメントを分析中...', 'info');
-    
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
-      
-      const response = await fetch('/api/analyze-video-comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ videoId }),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        this.displayVideoCommentsAnalysis(result.data);
-        this.showTempMessage('コメント分析が完了しました', 'success');
-      } else {
-        this.showTempMessage(result.error || 'エラーが発生しました', 'error');
-      }
-    } catch (error) {
-      console.error('Video comment analysis error:', error);
-      const errorMessage = createClientErrorMessage(error);
-      this.showTempMessage(errorMessage, 'error');
-    }
-  }
-  
-  displayVideoCommentsAnalysis(data) {
-    // Update statistics with video-specific data
-    this.populateCommentsStatistics(data.statistics);
-    
-    // Display AI summary if available
-    if (data.summary) {
-      this.displayAISummary(data.summary);
-    }
-    
-    // Update comment lists with video title in header
-    const videoTitle = data.videoTitle || '選択した動画';
-    
-    // Add video title to each section
-    const sections = ['topCommentsList', 'constructiveCommentsList', 'improvementCommentsList'];
-    sections.forEach(sectionId => {
-      const container = document.getElementById(sectionId);
-      if (container) {
-        const header = container.parentElement.querySelector('h4');
-        if (header) {
-          header.innerHTML = header.innerHTML.split('(')[0] + ` (${videoTitle})`;
-        }
-      }
-    });
-    
-    // Populate comments
-    this.populateCommentsList(data.topComments, 'topCommentsList');
-    this.populateCommentsList(data.constructiveComments, 'constructiveCommentsList');
-    this.populateCommentsList(data.improvementComments, 'improvementCommentsList');
-  }
-  
-  displayAISummary(summary) {
-    const aiSummaryCard = document.getElementById('aiSummaryCard');
-    if (!aiSummaryCard) return;
-    
-    // Show the card
-    aiSummaryCard.classList.remove('hidden');
-    
-    // Update sentiment
-    const sentimentElement = document.getElementById('overallSentiment');
-    if (sentimentElement && summary.overallSentiment) {
-      sentimentElement.textContent = summary.overallSentiment;
-      sentimentElement.className = 'value';
-      
-      // Add color based on sentiment
-      if (summary.overallSentiment.includes('ポジティブ')) {
-        sentimentElement.style.color = '#4CAF50';
-      } else if (summary.overallSentiment.includes('ネガティブ')) {
-        sentimentElement.style.color = '#f44336';
-      } else {
-        sentimentElement.style.color = '#FF9800';
-      }
-    }
-    
-    // Update key themes
-    const themesElement = document.getElementById('keyThemes');
-    if (themesElement && summary.keyThemes && summary.keyThemes.length > 0) {
-      themesElement.innerHTML = summary.keyThemes.map(theme => 
-        `<span>${theme}</span>`
-      ).join('');
-    }
-    
-    // Update audience insights
-    const insightsElement = document.getElementById('audienceInsights');
-    if (insightsElement && summary.audienceInsights) {
-      insightsElement.textContent = summary.audienceInsights;
-    }
-  }
-  
-  showTempMessage(message, type = 'info') {
-    const tempMsg = document.createElement('div');
-    tempMsg.className = `temp-message temp-message-${type}`;
-    tempMsg.textContent = message;
-    document.body.appendChild(tempMsg);
-    
-    setTimeout(() => {
-      tempMsg.style.animation = 'slideOutRight 0.3s ease-out forwards';
-      setTimeout(() => tempMsg.remove(), 300);
-    }, 3000);
   }
 
   populateCommentsStatistics(stats) {
