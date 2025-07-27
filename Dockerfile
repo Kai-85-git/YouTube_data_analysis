@@ -14,10 +14,10 @@ RUN npm ci --only=production
 COPY . .
 
 # アプリケーションが使用するポートを公開
-EXPOSE 3000
+EXPOSE 8080
 
 # Cloud Runはポート8080を期待するため、環境変数を設定
-ENV PORT=3000
+ENV PORT=8080
 
 # アプリケーションを起動
 CMD ["node", "server.js"]
