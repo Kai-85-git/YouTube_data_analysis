@@ -23,7 +23,7 @@ steps:
       - '--allow-unauthenticated'
       - '--port'
       - '8080'
-      - '--set-env-vars'
+      - '--update-env-vars'
       - 'NODE_ENV=production'
       - '--timeout'
       - '300'

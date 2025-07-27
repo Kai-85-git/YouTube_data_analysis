@@ -463,8 +463,14 @@ app.use((error, req, res, next) => {
     });
 });
 
+// Startup logging
+console.log('🔄 Starting server...');
+console.log(`📋 Environment: ${process.env.NODE_ENV || 'development'}`);
+console.log(`🔌 Port: ${PORT}`);
+console.log(`📊 ${config.app.name} v${config.app.version}`);
+
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📊 ${config.app.name} v${config.app.version} is ready!`);
-    console.log(`🌐 Server is listening on all interfaces`);
+    console.log(`✅ Server successfully started on port ${PORT}`);
+    console.log(`🌐 Server is listening on all interfaces (0.0.0.0:${PORT})`);
+    console.log(`💚 Health check available at: http://localhost:${PORT}/health`);
 });

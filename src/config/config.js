@@ -27,23 +27,29 @@ export const config = {
 };
 
 export function validateApiKey() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   if (!config.youtube.apiKey) {
-    console.error('❌ YouTube API key is not configured!');
-    console.error('📝 Please follow these steps:');
-    console.error('   1. Copy .env.example to .env');
-    console.error('   2. Get your API key from: https://console.developers.google.com/');
-    console.error('   3. Add your API key to the .env file');
-    console.error('   4. Restart the application');
-    process.exit(1);
+    console.warn('⚠️  YouTube API key is not configured!');
+    if (!isProduction) {
+      console.warn('📝 Please follow these steps:');
+      console.warn('   1. Copy .env.example to .env');
+      console.warn('   2. Get your API key from: https://console.developers.google.com/');
+      console.warn('   3. Add your API key to the .env file');
+      console.warn('   4. Restart the application');
+    }
+    console.warn('🔧 Running in demo mode without YouTube API access');
   }
   
   if (!config.gemini.apiKey) {
-    console.error('❌ Gemini API key is not configured!');
-    console.error('📝 Please follow these steps:');
-    console.error('   1. Get your API key from: https://aistudio.google.com/app/apikey');
-    console.error('   2. Add GEMINI_API_KEY to your .env file');
-    console.error('   3. Restart the application');
-    process.exit(1);
+    console.warn('⚠️  Gemini API key is not configured!');
+    if (!isProduction) {
+      console.warn('📝 Please follow these steps:');
+      console.warn('   1. Get your API key from: https://aistudio.google.com/app/apikey');
+      console.warn('   2. Add GEMINI_API_KEY to your .env file');
+      console.warn('   3. Restart the application');
+    }
+    console.warn('🔧 Running without AI features');
   }
   
   return config.youtube.apiKey;
