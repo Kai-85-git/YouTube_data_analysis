@@ -25,6 +25,16 @@ steps:
       - '8080'
       - '--set-env-vars'
       - 'NODE_ENV=production'
+      - '--timeout'
+      - '300'
+      - '--memory'
+      - '512Mi'
+      - '--cpu'
+      - '1'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '100'
 
 # イメージの保存先
 images:

@@ -44,6 +44,11 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Health check endpoint for Cloud Run
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
 const youtubeService = new YouTubeService();
 const commentAnalyzer = new CommentAnalyzer();
 const contentIdeaService = new ContentIdeaService();
@@ -458,8 +463,8 @@ app.use((error, req, res, next) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 ${config.app.name} v${config.app.version} is ready!`);
-    console.log(`🌐 Open your browser and navigate to http://localhost:${PORT}`);
+    console.log(`🌐 Server is listening on all interfaces`);
 });
