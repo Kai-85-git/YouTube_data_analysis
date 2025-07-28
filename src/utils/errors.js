@@ -11,6 +11,15 @@ export function createErrorResponse(error) {
   let errorMessage = 'チャンネルの分析中にエラーが発生しました';
   let statusCode = 500;
   
+  // 詳細なエラーログ
+  console.error('Error details:', {
+    message: error.message,
+    code: error.code,
+    response: error.response,
+    errors: error.errors,
+    stack: error.stack
+  });
+  
   if (error.message.includes('Channel not found')) {
     errorMessage = 'チャンネルが見つかりませんでした。URLを確認してください。';
     statusCode = 404;
@@ -26,6 +35,12 @@ export function createErrorResponse(error) {
   } else if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
     errorMessage = 'ネットワーク接続エラーが発生しました。インターネット接続を確認してください。';
     statusCode = 503;
+  } else if (error.response?.status === 403) {
+    errorMessage = 'APIキーが無効か、使用制限に達しています';
+    statusCode = 403;
+  } else if (error.errors && error.errors[0]) {
+    errorMessage = `YouTube API Error: ${error.errors[0].message}`;
+    statusCode = error.code || 400;
   }
   
   return {

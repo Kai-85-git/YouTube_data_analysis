@@ -5,8 +5,8 @@ import { YouTubeAnalyzerError } from '../utils/errors.js';
 import { config } from '../config/config.js';
 
 export class YouTubeService {
-  constructor() {
-    this.apiService = new YouTubeApiService();
+  constructor(apiKey) {
+    this.apiService = new YouTubeApiService(apiKey);
   }
 
   // チャンネル検索機能

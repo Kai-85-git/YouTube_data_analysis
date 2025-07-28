@@ -45,7 +45,7 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 
-const youtubeService = new YouTubeService();
+let youtubeService = null;
 const commentAnalyzer = new CommentAnalyzer();
 const contentIdeaService = new ContentIdeaService();
 const videoAnalysisService = new VideoAnalysisService();
@@ -57,7 +57,7 @@ app.get('/', (req, res) => {
 
 app.post('/api/analyze', async (req, res) => {
     try {
-        const { url } = req.body;
+        const { url, youtubeApiKey, geminiApiKey } = req.body;
         
         if (!url) {
             return res.status(400).json({ 
@@ -77,6 +77,19 @@ app.post('/api/analyze', async (req, res) => {
         }
 
         console.log(`[${new Date().toISOString()}] Analyzing channel: ${url}`);
+        
+        // APIキーが提供されている場合は使用、なければ環境変数から取得
+        const apiKey = youtubeApiKey || process.env.YOUTUBE_API_KEY;
+        if (!apiKey) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'YouTube APIキーが必要です',
+                message: 'YouTube APIキーを設定してください' 
+            });
+        }
+        
+        // YouTube serviceインスタンスを作成
+        youtubeService = new YouTubeService(apiKey);
         
         // Set a timeout for the analysis
         const timeoutPromise = new Promise((_, reject) => {
