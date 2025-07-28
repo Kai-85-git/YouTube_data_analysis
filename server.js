@@ -46,10 +46,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 let youtubeService = null;
+let videoAnalysisService = null;
+let geminiCommentAnalyzer = null;
 const commentAnalyzer = new CommentAnalyzer();
 const contentIdeaService = new ContentIdeaService();
-const videoAnalysisService = new VideoAnalysisService();
-const geminiCommentAnalyzer = new GeminiCommentAnalyzer();
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -218,7 +218,7 @@ app.post('/api/analyze-video-comments', async (req, res) => {
 
 app.post('/api/analyze-video-performance', async (req, res) => {
     try {
-        const { channelId, maxVideos = 20 } = req.body;
+        const { channelId, maxVideos = 20, youtubeApiKey, geminiApiKey } = req.body;
         
         if (!channelId) {
             return res.status(400).json({ 
@@ -229,6 +229,21 @@ app.post('/api/analyze-video-performance', async (req, res) => {
         }
 
         console.log(`[${new Date().toISOString()}] Analyzing video performance for channel: ${channelId}`);
+        
+        // APIキーが提供されている場合は使用、なければ環境変数から取得
+        const ytApiKey = youtubeApiKey || process.env.YOUTUBE_API_KEY;
+        const gmApiKey = geminiApiKey || process.env.GEMINI_API_KEY;
+        
+        if (!ytApiKey || !gmApiKey) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'APIキーが必要です',
+                message: 'YouTube APIキーとGemini APIキーを設定してください' 
+            });
+        }
+        
+        // VideoAnalysisServiceインスタンスを作成
+        videoAnalysisService = new VideoAnalysisService(ytApiKey, gmApiKey);
         
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
@@ -260,7 +275,7 @@ app.post('/api/analyze-video-performance', async (req, res) => {
 
 app.post('/api/generate-ai-video-ideas', async (req, res) => {
     try {
-        const { channelId, specificTopic } = req.body;
+        const { channelId, specificTopic, youtubeApiKey, geminiApiKey } = req.body;
         
         if (!channelId) {
             return res.status(400).json({ 
@@ -271,6 +286,21 @@ app.post('/api/generate-ai-video-ideas', async (req, res) => {
         }
 
         console.log(`[${new Date().toISOString()}] Generating AI video ideas for channel: ${channelId}`);
+        
+        // APIキーが提供されている場合は使用、なければ環境変数から取得
+        const ytApiKey = youtubeApiKey || process.env.YOUTUBE_API_KEY;
+        const gmApiKey = geminiApiKey || process.env.GEMINI_API_KEY;
+        
+        if (!ytApiKey || !gmApiKey) {
+            return res.status(400).json({ 
+                success: false,
+                error: 'APIキーが必要です',
+                message: 'YouTube APIキーとGemini APIキーを設定してください' 
+            });
+        }
+        
+        // VideoAnalysisServiceインスタンスを作成
+        videoAnalysisService = new VideoAnalysisService(ytApiKey, gmApiKey);
         
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);

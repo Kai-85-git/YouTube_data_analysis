@@ -4,9 +4,9 @@ import { config } from '../config/config.js';
 import { YouTubeAnalyzerError } from '../utils/errors.js';
 
 export class VideoAnalysisService {
-  constructor() {
-    this.youtubeApi = new YouTubeApiService();
-    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+  constructor(youtubeApiKey, geminiApiKey) {
+    this.youtubeApi = new YouTubeApiService(youtubeApiKey || config.youtube.apiKey);
+    this.genAI = new GoogleGenerativeAI(geminiApiKey || config.gemini.apiKey);
     
     // 利用可能なモデル名をフォールバック順で定義
     this.availableModels = [
