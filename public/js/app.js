@@ -33,6 +33,15 @@ class YouTubeAnalyzerApp {
     // Video selection elements
     this.videoSelect = document.getElementById('videoSelect');
     this.analyzeVideoCommentsBtn = document.getElementById('analyzeVideoCommentsBtn');
+    
+    // Settings elements
+    this.settingsBtn = document.getElementById('settingsBtn');
+    this.settingsModal = document.getElementById('settingsModal');
+    this.closeModalBtn = document.getElementById('closeModalBtn');
+    this.saveApiKeysBtn = document.getElementById('saveApiKeysBtn');
+    this.cancelApiKeysBtn = document.getElementById('cancelApiKeysBtn');
+    this.youtubeApiKeyInput = document.getElementById('youtubeApiKey');
+    this.geminiApiKeyInput = document.getElementById('geminiApiKey');
   }
 
   bindEvents() {
@@ -61,6 +70,20 @@ class YouTubeAnalyzerApp {
     if (this.backToResultsFromAIBtn) {
       this.backToResultsFromAIBtn.addEventListener('click', () => this.showChannelResults());
     }
+    
+    // Settings event listeners
+    this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
+    this.closeModalBtn.addEventListener('click', () => this.closeSettingsModal());
+    this.cancelApiKeysBtn.addEventListener('click', () => this.closeSettingsModal());
+    this.saveApiKeysBtn.addEventListener('click', () => this.saveApiKeys());
+    this.settingsModal.addEventListener('click', (e) => {
+      if (e.target === this.settingsModal) {
+        this.closeSettingsModal();
+      }
+    });
+    
+    // Load saved API keys on startup
+    this.loadApiKeys();
   }
 
   async handleSubmit(e) {
@@ -80,7 +103,11 @@ class YouTubeAnalyzerApp {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ 
+          url,
+          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
+        }),
         signal: controller.signal
       });
 
@@ -162,7 +189,11 @@ class YouTubeAnalyzerApp {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ channelId: this.currentData.channel.id }),
+        body: JSON.stringify({ 
+          channelId: this.currentData.channel.id,
+          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
+        }),
         signal: controller.signal
       });
 
@@ -254,7 +285,11 @@ class YouTubeAnalyzerApp {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ videoId }),
+        body: JSON.stringify({ 
+          videoId,
+          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
+        }),
         signal: controller.signal
       });
       
@@ -439,7 +474,9 @@ class YouTubeAnalyzerApp {
         },
         body: JSON.stringify({
           channelId: this.currentData.channel.id,
-          maxVideos: 30
+          maxVideos: 30,
+          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
         })
       });
 
@@ -456,7 +493,9 @@ class YouTubeAnalyzerApp {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          channelId: this.currentData.channel.id
+          channelId: this.currentData.channel.id,
+          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
         })
       });
 
@@ -642,7 +681,9 @@ class YouTubeAnalyzerApp {
         body: JSON.stringify({
           prompt: userPrompt,
           channelId: this.currentData.channel.id,
-          analysisData: minimalAnalysisData // 最小限のデータのみ送信
+          analysisData: minimalAnalysisData, // 最小限のデータのみ送信
+          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
         })
       });
 
@@ -734,6 +775,72 @@ class YouTubeAnalyzerApp {
     this.contentIdeaManager.clear();
     this.uiManager.resetForm();
     this.currentData = null;
+  }
+
+  // Settings modal methods
+  openSettingsModal() {
+    this.settingsModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent body scroll
+  }
+
+  closeSettingsModal() {
+    this.settingsModal.classList.add('hidden');
+    document.body.style.overflow = ''; // Restore body scroll
+  }
+
+  loadApiKeys() {
+    // Load API keys from localStorage
+    const youtubeApiKey = localStorage.getItem('YOUTUBE_API_KEY');
+    const geminiApiKey = localStorage.getItem('GEMINI_API_KEY');
+    
+    if (youtubeApiKey) {
+      this.youtubeApiKeyInput.value = youtubeApiKey;
+    }
+    if (geminiApiKey) {
+      this.geminiApiKeyInput.value = geminiApiKey;
+    }
+  }
+
+  saveApiKeys() {
+    const youtubeApiKey = this.youtubeApiKeyInput.value.trim();
+    const geminiApiKey = this.geminiApiKeyInput.value.trim();
+    
+    // Save to localStorage
+    if (youtubeApiKey) {
+      localStorage.setItem('YOUTUBE_API_KEY', youtubeApiKey);
+    } else {
+      localStorage.removeItem('YOUTUBE_API_KEY');
+    }
+    
+    if (geminiApiKey) {
+      localStorage.setItem('GEMINI_API_KEY', geminiApiKey);
+    } else {
+      localStorage.removeItem('GEMINI_API_KEY');
+    }
+    
+    // Show success message
+    this.showTemporaryMessage('APIキーが保存されました');
+    
+    // Close modal
+    this.closeSettingsModal();
+  }
+
+  showTemporaryMessage(message) {
+    const messageEl = document.createElement('div');
+    messageEl.className = 'temp-message temp-message-success';
+    messageEl.textContent = message;
+    document.body.appendChild(messageEl);
+    
+    setTimeout(() => {
+      messageEl.classList.add('show');
+    }, 100);
+    
+    setTimeout(() => {
+      messageEl.classList.remove('show');
+      setTimeout(() => {
+        document.body.removeChild(messageEl);
+      }, 300);
+    }, 3000);
   }
 }
 

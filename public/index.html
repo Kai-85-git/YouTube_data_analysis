@@ -38,12 +38,19 @@
         <!-- Header -->
         <header class="header">
             <div class="header-content">
-                <div class="logo">
-                    <i class="fab fa-youtube"></i>
-                    <h1>YouTube Analyzer</h1>
+                <div class="header-left">
+                    <div class="logo">
+                        <i class="fab fa-youtube"></i>
+                        <h1>YouTube Analyzer</h1>
+                    </div>
+                    <div class="header-subtitle">
+                        チャンネルの詳細分析ツール
+                    </div>
                 </div>
-                <div class="header-subtitle">
-                    チャンネルの詳細分析ツール
+                <div class="header-right">
+                    <button class="settings-btn" id="settingsBtn" title="API設定">
+                        <i class="fas fa-cog"></i>
+                    </button>
                 </div>
             </div>
             <div class="header-bg"></div>
@@ -393,6 +400,70 @@
         <footer class="footer">
             <p>&copy; 2024 YouTube Channel Analyzer. Powered by YouTube Data API v3</p>
         </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay hidden" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-cog"></i> API設定</h3>
+                <button class="modal-close" id="closeModalBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="api-key-section">
+                    <p class="modal-description">
+                        YouTube Data APIとGemini APIのキーを設定してください。
+                        APIキーはブラウザのローカルストレージに保存されます。
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="youtubeApiKey">
+                            <i class="fab fa-youtube"></i> YouTube API Key
+                        </label>
+                        <input 
+                            type="password" 
+                            id="youtubeApiKey" 
+                            placeholder="AIzaSy..." 
+                            class="api-key-input"
+                        >
+                        <small class="form-help">
+                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank">
+                                Google Cloud ConsoleでAPIキーを取得
+                            </a>
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="geminiApiKey">
+                            <i class="fas fa-robot"></i> Gemini API Key
+                        </label>
+                        <input 
+                            type="password" 
+                            id="geminiApiKey" 
+                            placeholder="AIzaSy..." 
+                            class="api-key-input"
+                        >
+                        <small class="form-help">
+                            <a href="https://makersuite.google.com/app/apikey" target="_blank">
+                                Google AI StudioでAPIキーを取得
+                            </a>
+                        </small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button class="btn btn-primary" id="saveApiKeysBtn">
+                            <i class="fas fa-save"></i>
+                            保存
+                        </button>
+                        <button class="btn btn-secondary" id="cancelApiKeysBtn">
+                            キャンセル
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script type="module" src="js/app.js"></script>

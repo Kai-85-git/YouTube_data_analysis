@@ -18,7 +18,9 @@ export class ContentIdeaManager {
                 body: JSON.stringify({
                     channelId,
                     comments,
-                    topVideos
+                    topVideos,
+                    youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+                    geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
                 })
             });
 
@@ -65,7 +67,9 @@ export class ContentIdeaManager {
                 },
                 body: JSON.stringify({
                     commentAnalysisData,
-                    channelVideos
+                    channelVideos,
+                    youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+                    geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
                 })
             });
 
@@ -738,7 +742,9 @@ export class ContentIdeaManager {
                 },
                 body: JSON.stringify({
                     prompt: userPrompt,
-                    channelContext: this.currentData // 現在のチャンネルデータがあれば送信
+                    channelContext: this.currentData, // 現在のチャンネルデータがあれば送信
+                    youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+                    geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
                 })
             });
 

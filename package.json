@@ -8,6 +8,7 @@
     "start:refactored": "node server-refactored.js",
     "dev": "node server.js",
     "dev:refactored": "node server-refactored.js",
+    "build": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {

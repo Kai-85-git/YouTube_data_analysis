@@ -44,10 +44,6 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Health check endpoint for Cloud Run
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
-});
 
 const youtubeService = new YouTubeService();
 const commentAnalyzer = new CommentAnalyzer();
@@ -472,5 +468,5 @@ console.log(`📊 ${config.app.name} v${config.app.version}`);
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Server successfully started on port ${PORT}`);
     console.log(`🌐 Server is listening on all interfaces (0.0.0.0:${PORT})`);
-    console.log(`💚 Health check available at: http://localhost:${PORT}/health`);
+    console.log(`🌐 Application available at: http://localhost:${PORT}`);
 });
