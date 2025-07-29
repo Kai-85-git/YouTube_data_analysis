@@ -165,7 +165,7 @@ app.post('/api/analyze-comments', async (req, res) => {
 
 app.post('/api/analyze-video-comments', async (req, res) => {
     try {
-        const { videoId } = req.body;
+        const { videoId, youtubeApiKey, geminiApiKey } = req.body;
         
         if (!videoId) {
             return res.status(400).json({ 
@@ -173,6 +173,31 @@ app.post('/api/analyze-video-comments', async (req, res) => {
                 error: '動画IDが必要です',
                 message: '動画IDを指定してください' 
             });
+        }
+
+        if (!youtubeApiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'YouTube APIキーが必要です',
+                message: 'YouTube APIキーを設定してください'
+            });
+        }
+
+        if (!geminiApiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'Gemini APIキーが必要です',
+                message: 'Gemini APIキーを設定してください'
+            });
+        }
+
+        // Initialize services if not already done
+        if (!youtubeService) {
+            youtubeService = new YouTubeService(youtubeApiKey);
+        }
+        
+        if (!geminiCommentAnalyzer) {
+            geminiCommentAnalyzer = new GeminiCommentAnalyzer(geminiApiKey);
         }
 
         console.log(`[${new Date().toISOString()}] Analyzing comments for video: ${videoId}`);

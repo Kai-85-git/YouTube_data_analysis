@@ -657,7 +657,7 @@ class YouTubeAnalyzerApp {
     // ボタンを無効化してローディング状態に
     generateBtn.disabled = true;
     generateBtn.innerHTML = '<span class="loading-spinner-small"></span> 生成中...';
-    resultContainer.innerHTML = '<div class="generating-message">🤖 チャンネル分析結果を基にアイデアを生成しています...</div>';
+    resultContainer.innerHTML = '<div class="generating-message">チャンネル分析結果を基にアイデアを生成しています...</div>';
 
     try {
       // 必要最小限のデータのみを抽出
@@ -710,45 +710,45 @@ class YouTubeAnalyzerApp {
     resultContainer.innerHTML = `
       <div class="ai-video-idea-card">
         <div class="ai-idea-header">
-          <span class="ai-badge">🤖 Gemini AI提案</span>
+          <span class="ai-badge">Gemini AI提案</span>
           <h4 class="ai-idea-title">${ideaData.title}</h4>
         </div>
         <div class="ai-idea-content">
           <div class="idea-section">
-            <h5>📝 動画コンセプト</h5>
+            <h5>動画コンセプト</h5>
             <p>${ideaData.concept}</p>
           </div>
           
           <div class="idea-section">
-            <h5>🎯 なぜこの動画がおすすめか</h5>
+            <h5>なぜこの動画がおすすめか</h5>
             <p>${ideaData.reasoning}</p>
           </div>
           
           <div class="idea-section">
-            <h5>📊 期待される成果</h5>
+            <h5>期待される成果</h5>
             <ul class="performance-expectations">
               ${ideaData.expectedPerformance.map(item => `<li>${item}</li>`).join('')}
             </ul>
           </div>
           
           <div class="idea-section">
-            <h5>📋 動画構成案</h5>
+            <h5>動画構成案</h5>
             <ul class="video-structure">
               ${ideaData.structure.map(item => `<li>${item}</li>`).join('')}
             </ul>
           </div>
           
           <div class="idea-section">
-            <h5>💡 成功のポイント</h5>
+            <h5>成功のポイント</h5>
             <ul class="success-tips">
               ${ideaData.successTips.map(tip => `<li>${tip}</li>`).join('')}
             </ul>
           </div>
           
           <div class="idea-meta">
-            <span class="meta-item">⏱️ 推奨時間: ${ideaData.recommendedLength}</span>
-            <span class="meta-item">📅 最適な投稿日: ${ideaData.bestUploadTime}</span>
-            <span class="meta-item">🎨 サムネイル案: ${ideaData.thumbnailSuggestion}</span>
+            <span class="meta-item">推奨時間: ${ideaData.recommendedLength}</span>
+            <span class="meta-item">最適な投稿日: ${ideaData.bestUploadTime}</span>
+            <span class="meta-item">サムネイル案: ${ideaData.thumbnailSuggestion}</span>
           </div>
           
           <div class="idea-tags">

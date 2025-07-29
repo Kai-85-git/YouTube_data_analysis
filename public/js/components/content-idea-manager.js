@@ -128,7 +128,7 @@ export class ContentIdeaManager {
                     
                     <div class="analysis-summary">
                         <div class="content-gaps">
-                            <h4>📊 不足しているコンテンツ</h4>
+                            <h4>不足しているコンテンツ</h4>
                             <div class="gaps-tags">
                                 ${analysis.contentGaps.map(gap => `<span class="gap-tag">${gap}</span>`).join('')}
                             </div>
@@ -155,16 +155,16 @@ export class ContentIdeaManager {
                                 </div>
                                 <div class="idea-details">
                                     <p class="idea-reason"><strong>提案理由:</strong> ${idea.reason}</p>
-                                    <p class="idea-prediction">📈 予想: 現在の平均×${idea.estimatedViews}の視聴</p>
-                                    <p class="target-audience">🎯 <strong>ターゲット:</strong> ${idea.targetAudience}</p>
+                                    <p class="idea-prediction">予想: 現在の平均×${idea.estimatedViews}の視聴</p>
+                                    <p class="target-audience"><strong>ターゲット:</strong> ${idea.targetAudience}</p>
                                     
                                     <div class="idea-meta">
-                                        <span class="production-time">⏱️ ${idea.productionTime}</span>
-                                        <span class="difficulty ${idea.difficulty}">🎯 ${idea.difficulty}</span>
+                                        <span class="production-time">${idea.productionTime}</span>
+                                        <span class="difficulty ${idea.difficulty}">${idea.difficulty}</span>
                                     </div>
                                     
                                     <div class="key-points">
-                                        <h5>📝 重要ポイント:</h5>
+                                        <h5>重要ポイント:</h5>
                                         <ul>
                                             ${idea.keyPoints.map(point => `<li>${point}</li>`).join('')}
                                         </ul>
@@ -225,7 +225,7 @@ export class ContentIdeaManager {
                         </div>
                         
                         <div class="optimization-card">
-                            <h4>📝 効果的なタイトル形式</h4>
+                            <h4>効果的なタイトル形式</h4>
                             <ul>
                                 ${optimizationTips.titleFormats.map(format => `<li>${format}</li>`).join('')}
                             </ul>
@@ -253,11 +253,11 @@ export class ContentIdeaManager {
 
         return `
             <div class="content-ideas-section">
-                <h2 class="section-title">🎯 次の動画アイデア</h2>
+                <h2 class="section-title">次の動画アイデア</h2>
                 
                 <!-- カスタム動画アイデア生成 -->
                 <div class="custom-idea-generation">
-                    <h3 class="subsection-title">💡 カスタム動画アイデア生成</h3>
+                    <h3 class="subsection-title">カスタム動画アイデア生成</h3>
                     <div class="custom-idea-form">
                         <textarea id="customIdeaPrompt" placeholder="どんな動画を作りたいですか？例：「初心者向けのプログラミング解説動画」「料理の時短テクニック」など..." rows="3"></textarea>
                         <button id="generateCustomIdea" class="generate-btn">
@@ -282,8 +282,8 @@ export class ContentIdeaManager {
                                     <p class="idea-reason">理由: ${idea.reason}</p>
                                     <p class="idea-prediction">予想: 現在の平均×${idea.estimatedViews}の視聴</p>
                                     <div class="idea-meta">
-                                        <span class="production-time">⏱️ ${idea.productionTime}</span>
-                                        <span class="difficulty ${idea.difficulty}">🎯 ${idea.difficulty}</span>
+                                        <span class="production-time">${idea.productionTime}</span>
+                                        <span class="difficulty ${idea.difficulty}">${idea.difficulty}</span>
                                     </div>
                                     <div class="idea-tags">
                                         ${idea.tags.map(tag => `<span class="tag">#${tag}</span>`).join('')}
@@ -354,7 +354,7 @@ export class ContentIdeaManager {
                                 <h4 class="need-topic">${need.topic}</h4>
                                 <div class="need-details">
                                     <span class="demand-level ${need.demand}">需要: ${need.demand}</span>
-                                    <span class="comment-count">📝 ${need.commentCount}件のコメント</span>
+                                    <span class="comment-count">${need.commentCount}件のコメント</span>
                                 </div>
                                 <p class="need-reasoning">${need.reasoning}</p>
                             </div>
@@ -371,7 +371,7 @@ export class ContentIdeaManager {
                     </div>
                     
                     <div class="gaps-section">
-                        <h4>📊 コンテンツギャップ</h4>
+                        <h4>コンテンツギャップ</h4>
                         <ul class="gaps-list">
                             ${viewerNeeds.contentGaps.map(gap => `<li>${gap}</li>`).join('')}
                         </ul>
@@ -380,7 +380,7 @@ export class ContentIdeaManager {
 
                 <!-- 成功パターン分析 -->
                 <div class="patterns-section">
-                    <h3 class="subsection-title">📈 成功パターン分析</h3>
+                    <h3 class="subsection-title">成功パターン分析</h3>
                     <div class="patterns-grid">
                         ${patterns.patterns.map(pattern => `
                             <div class="pattern-card">
@@ -403,7 +403,7 @@ export class ContentIdeaManager {
                     </div>
                     
                     <div class="title-formats">
-                        <h4>📝 効果的なタイトル形式</h4>
+                        <h4>効果的なタイトル形式</h4>
                         <ul>
                             ${patterns.titleFormats.map(format => `<li>${format}</li>`).join('')}
                         </ul>
@@ -626,7 +626,7 @@ export class ContentIdeaManager {
                     <p><strong>ターゲット視聴者:</strong> ${idea.targetAudience}</p>
                     
                     <div class="key-points-modal">
-                        <h5>📝 重要ポイント:</h5>
+                        <h5>重要ポイント:</h5>
                         <ul>
                             ${idea.keyPoints.map(point => `<li>${point}</li>`).join('')}
                         </ul>
@@ -776,32 +776,32 @@ export class ContentIdeaManager {
                 </div>
                 <div class="custom-idea-content">
                     <div class="idea-section">
-                        <h5>📝 コンセプト</h5>
+                        <h5>コンセプト</h5>
                         <p>${ideaData.concept}</p>
                     </div>
                     
                     <div class="idea-section">
-                        <h5>🎯 ターゲット視聴者</h5>
+                        <h5>ターゲット視聴者</h5>
                         <p>${ideaData.targetAudience}</p>
                     </div>
                     
                     <div class="idea-section">
-                        <h5>📋 動画の構成</h5>
+                        <h5>動画の構成</h5>
                         <ul class="structure-list">
                             ${ideaData.structure.map(item => `<li>${item}</li>`).join('')}
                         </ul>
                     </div>
                     
                     <div class="idea-section">
-                        <h5>💡 成功のポイント</h5>
+                        <h5>成功のポイント</h5>
                         <ul class="key-points-list">
                             ${ideaData.keyPoints.map(point => `<li>${point}</li>`).join('')}
                         </ul>
                     </div>
                     
                     <div class="idea-meta">
-                        <span class="meta-item">⏱️ 制作時間: ${ideaData.estimatedTime}</span>
-                        <span class="meta-item">📊 難易度: ${ideaData.difficulty}</span>
+                        <span class="meta-item">制作時間: ${ideaData.estimatedTime}</span>
+                        <span class="meta-item">難易度: ${ideaData.difficulty}</span>
                         <span class="meta-item">👁️ 予想視聴数: ${ideaData.estimatedViews}</span>
                     </div>
                     

@@ -3,8 +3,11 @@ import { config } from '../config/config.js';
 import { YouTubeAnalyzerError } from '../utils/errors.js';
 
 export class GeminiCommentAnalyzer {
-  constructor() {
-    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+  constructor(apiKey) {
+    if (!apiKey) {
+      throw new YouTubeAnalyzerError('Gemini API key is required', 'API_KEY_MISSING');
+    }
+    this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: config.gemini.model });
   }
 
