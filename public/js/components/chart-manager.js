@@ -119,16 +119,18 @@ export class ChartManager {
     const months = ['6ヶ月前', '5ヶ月前', '4ヶ月前', '3ヶ月前', '2ヶ月前', '1ヶ月前', '現在'];
     const data = [];
     
-    // Generate past data with growth rate consideration
-    const growthRate = 0.85; // Monthly growth rate
-    let prevValue = currentSubs;
+    // Generate realistic growth pattern with some variation
+    const baseGrowthRates = [1.2, 1.15, 1.08, 1.05, 1.03, 1.02, 1.0]; // Decreasing growth over time
+    let currentValue = currentSubs;
     
+    // Calculate backwards from current value
     for (let i = months.length - 1; i >= 0; i--) {
       if (i === months.length - 1) {
-        data.unshift(currentSubs);
+        data.unshift(currentValue);
       } else {
-        prevValue = Math.round(prevValue * growthRate);
-        data.unshift(prevValue);
+        // Calculate previous value by dividing by growth rate
+        currentValue = Math.round(currentValue / baseGrowthRates[i + 1]);
+        data.unshift(currentValue);
       }
     }
     
