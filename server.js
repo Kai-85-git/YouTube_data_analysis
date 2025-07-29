@@ -10,6 +10,7 @@ import { CommentAnalyzer } from './src/services/comment-analyzer.js';
 import { ContentIdeaService } from './src/services/content-idea-service.js';
 import { VideoAnalysisService } from './src/services/video-analysis-service.js';
 import { GeminiCommentAnalyzer } from './src/services/gemini-comment-analyzer.js';
+import { findAvailablePort } from './src/utils/port-finder.js';
 
 // Validate API key
 validateApiKey();
@@ -505,11 +506,22 @@ app.use((error, req, res, next) => {
 // Startup logging
 console.log('🔄 Starting server...');
 console.log(`📋 Environment: ${process.env.NODE_ENV || 'development'}`);
-console.log(`🔌 Port: ${PORT}`);
 console.log(`📊 ${config.app.name} v${config.app.version}`);
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server successfully started on port ${PORT}`);
-    console.log(`🌐 Server is listening on all interfaces (0.0.0.0:${PORT})`);
-    console.log(`🌐 Application available at: http://localhost:${PORT}`);
-});
+// Find available port and start server
+findAvailablePort(PORT)
+  .then(availablePort => {
+    app.listen(availablePort, '0.0.0.0', () => {
+      console.log(`✅ Server successfully started on port ${availablePort}`);
+      console.log(`🌐 Server is listening on all interfaces (0.0.0.0:${availablePort})`);
+      console.log(`🌐 Application available at: http://localhost:${availablePort}`);
+      
+      if (availablePort !== PORT) {
+        console.log(`⚠️  Originally tried port ${PORT}, but used ${availablePort} instead`);
+      }
+    });
+  })
+  .catch(error => {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  });
