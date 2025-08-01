@@ -50,7 +50,14 @@ let youtubeService = null;
 let videoAnalysisService = null;
 let geminiCommentAnalyzer = null;
 const commentAnalyzer = new CommentAnalyzer();
-const contentIdeaService = new ContentIdeaService();
+let contentIdeaService = null;
+
+// ContentIdeaServiceの初期化を試みる
+try {
+    contentIdeaService = new ContentIdeaService();
+} catch (error) {
+    console.warn('ContentIdeaService initialization failed:', error.message);
+}
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -356,7 +363,7 @@ app.post('/api/generate-ai-video-ideas', async (req, res) => {
 
 app.post('/api/generate-ai-channel-video-idea', async (req, res) => {
     try {
-        const { prompt, channelId, analysisData } = req.body;
+        const { prompt, channelId, analysisData, youtubeApiKey, geminiApiKey } = req.body;
         
         if (!prompt || prompt.trim() === '') {
             return res.status(400).json({ 
@@ -376,11 +383,16 @@ app.post('/api/generate-ai-channel-video-idea', async (req, res) => {
 
         console.log(`[${new Date().toISOString()}] Generating AI channel video idea for channel: ${channelId}`);
         
+        // APIキーが提供されている場合は新しいインスタンスを作成
+        const ideaService = (youtubeApiKey || geminiApiKey) 
+            ? new ContentIdeaService(youtubeApiKey, geminiApiKey) 
+            : contentIdeaService;
+        
         const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout')), config.server.timeout);
         });
         
-        const customIdeaPromise = contentIdeaService.generateAIChannelVideoIdea(prompt, channelId, analysisData);
+        const customIdeaPromise = ideaService.generateAIChannelVideoIdea(prompt, channelId, analysisData);
         const customIdea = await Promise.race([customIdeaPromise, timeoutPromise]);
         
         console.log(`[${new Date().toISOString()}] AI channel video idea generated successfully`);

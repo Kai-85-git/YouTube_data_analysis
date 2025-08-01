@@ -2,8 +2,12 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config/config.js';
 
 export class ContentIdeaService {
-  constructor() {
-    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+  constructor(youtubeApiKey, geminiApiKey) {
+    const apiKey = geminiApiKey || config.gemini.apiKey;
+    if (!apiKey) {
+      throw new Error('Gemini API key is required');
+    }
+    this.genAI = new GoogleGenerativeAI(apiKey);
     this.model = this.genAI.getGenerativeModel({ model: config.gemini.model });
   }
 
@@ -463,13 +467,41 @@ ${channelAnalysisInfo}
       const response = await result.response;
       const text = response.text();
       
-      // JSONを抽出してパース
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('AI応答からJSONを抽出できませんでした');
+      // JSONを抽出してパース（コードブロックも考慮）
+      let aiIdea;
+      try {
+        // まず、コードブロックを除去
+        const cleanedText = text.replace(/```json\s*|\s*```/g, '').trim();
+        
+        // 最初の{から最後の}までを抽出（ネストされたJSONに対応）
+        let braceCount = 0;
+        let startIdx = -1;
+        let endIdx = -1;
+        
+        for (let i = 0; i < cleanedText.length; i++) {
+          if (cleanedText[i] === '{') {
+            if (startIdx === -1) startIdx = i;
+            braceCount++;
+          } else if (cleanedText[i] === '}') {
+            braceCount--;
+            if (braceCount === 0 && startIdx !== -1) {
+              endIdx = i + 1;
+              break;
+            }
+          }
+        }
+        
+        if (startIdx === -1 || endIdx === -1) {
+          throw new Error('有効なJSONが見つかりませんでした');
+        }
+        
+        const jsonStr = cleanedText.substring(startIdx, endIdx);
+        aiIdea = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.error('JSON解析エラー:', parseError);
+        console.error('AI応答テキスト:', text);
+        throw new Error(`AI応答の解析に失敗しました: ${parseError.message}`);
       }
-
-      const aiIdea = JSON.parse(jsonMatch[0]);
       
       // デフォルト値の設定と検証
       return {
@@ -501,7 +533,55 @@ ${channelAnalysisInfo}
     } catch (error) {
       console.error('AIチャンネル動画アイデア生成エラー:', error);
       
-      // フォールバック
+      // エラーの種類に応じたフォールバック
+      if (error.message.includes('AI応答の解析に失敗')) {
+        // JSON解析エラーの場合は、シンプルなフォーマットで再試行
+        try {
+          const simplePrompt = `
+${userPrompt}についての動画アイデアを提案してください。
+以下の項目について、簡潔に答えてください：
+1. タイトル
+2. 内容の概要
+3. なぜおすすめか
+4. 期待される効果
+5. 動画の構成
+`;
+          const fallbackResult = await this.model.generateContent(simplePrompt);
+          const fallbackResponse = await fallbackResult.response;
+          const fallbackText = fallbackResponse.text();
+          
+          // テキストから情報を抽出
+          return {
+            title: `${userPrompt}についての動画企画`,
+            concept: fallbackText.substring(0, 200),
+            reasoning: "視聴者のニーズに応える内容です",
+            expectedPerformance: [
+              "視聴者の関心を引く内容",
+              "エンゲージメントの向上",
+              "新規視聴者の獲得"
+            ],
+            structure: [
+              "1. イントロダクション",
+              "2. メインコンテンツ",
+              "3. 実例・デモ",
+              "4. まとめ"
+            ],
+            successTips: [
+              "明確な構成で伝える",
+              "視聴者の関心を維持する",
+              "実践的な内容を含める"
+            ],
+            recommendedLength: "10-15分",
+            bestUploadTime: "金曜日 19:00",
+            thumbnailSuggestion: "キャッチーなタイトルと関連画像",
+            suggestedTags: [userPrompt, "動画", "YouTube", "チュートリアル"]
+          };
+        } catch (fallbackError) {
+          console.error('フォールバックも失敗:', fallbackError);
+        }
+      }
+      
+      // 最終的なフォールバック
       return {
         title: `${userPrompt}に関する動画`,
         concept: "チャンネル分析を基にした動画企画",
