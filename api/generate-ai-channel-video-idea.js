@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const { createErrorResponse } = await import('../src/utils/errors.js');
 
   try {
-    const { prompt, channelId, analysisData } = req.body;
+    const { prompt, channelId, analysisData, youtubeApiKey, geminiApiKey } = req.body;
 
     if (!prompt || !channelId) {
       return res.status(400).json({
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const videoAnalysisService = new VideoAnalysisService();
+    const videoAnalysisService = new VideoAnalysisService(youtubeApiKey, geminiApiKey);
     const result = await videoAnalysisService.generateCustomVideoIdea(prompt, channelId, analysisData);
 
     res.status(200).json({

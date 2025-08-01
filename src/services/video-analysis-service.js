@@ -376,4 +376,76 @@ ${specificTopic ? `## 特定のトピック要求: ${specificTopic}` : ''}
       throw new YouTubeAnalyzerError(`動画アイデア生成に失敗しました: ${error.message}`, error.code);
     }
   }
+
+  async generateCustomVideoIdea(prompt, channelId, analysisData) {
+    try {
+      const ideaPrompt = `
+あなたはYouTubeチャンネルのコンサルタントです。
+以下の情報を基に、ユーザーが作りたい動画のアイデアを具体化してください。
+
+## ユーザーのリクエスト:
+${prompt}
+
+## チャンネル分析データ:
+${analysisData ? JSON.stringify(analysisData, null, 2) : 'データなし'}
+
+## 要求:
+以下のJSON形式で回答してください：
+{
+  "title": "視聴者の興味を引く魅力的なタイトル（日本語で50文字以内）",
+  "concept": "動画のメインコンセプト（100文字程度）",
+  "reasoning": "なぜこの動画がおすすめか（チャンネルの特性を踏まえた理由）",
+  "expectedPerformance": [
+    "期待される成果1",
+    "期待される成果2",
+    "期待される成果3"
+  ],
+  "structure": [
+    "イントロ（最初の30秒）",
+    "メインコンテンツ1",
+    "メインコンテンツ2",
+    "まとめ・CTA"
+  ],
+  "successTips": [
+    "成功のポイント1",
+    "成功のポイント2",
+    "成功のポイント3"
+  ],
+  "recommendedLength": "推奨動画時間（例：10-15分）",
+  "optimalPublishTime": "最適な投稿時間（例：金曜日 20:00）"
+}
+
+必ず上記のJSON形式で回答してください。
+`;
+
+      const result = await this.generateWithFallback(ideaPrompt);
+      const response = await result.response;
+      const responseText = response.text();
+      
+      try {
+        // JSONとして解析を試みる
+        const cleanedText = responseText.replace(/```json\s*|\s*```/g, '').trim();
+        const parsedIdea = JSON.parse(cleanedText);
+        
+        return parsedIdea;
+      } catch (parseError) {
+        // JSON解析に失敗した場合、デフォルトの構造で返す
+        console.error('JSON parse error:', parseError);
+        return {
+          title: "動画タイトルの生成に失敗しました",
+          concept: responseText.substring(0, 100),
+          reasoning: "AIレスポンスの解析に失敗しました",
+          expectedPerformance: ["詳細な分析結果を取得できませんでした"],
+          structure: ["構成案を生成できませんでした"],
+          successTips: ["成功のポイントを生成できませんでした"],
+          recommendedLength: "10-15分",
+          optimalPublishTime: "金曜日 20:00"
+        };
+      }
+      
+    } catch (error) {
+      console.error('Custom video idea generation error:', error);
+      throw new YouTubeAnalyzerError(`カスタム動画アイデア生成に失敗しました: ${error.message}`, error.code);
+    }
+  }
 }
