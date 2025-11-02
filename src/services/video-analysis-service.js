@@ -10,11 +10,11 @@ export class VideoAnalysisService {
     
     // 利用可能なモデル名をフォールバック順で定義
     this.availableModels = [
+      'gemini-2.0-flash-exp',
       'gemini-1.5-flash',
-      'gemini-1.5-flash-001', 
+      'gemini-1.5-flash-001',
       'gemini-1.5-pro',
-      'gemini-1.5-pro-001',
-      'gemini-2.0-flash-exp'
+      'gemini-1.5-pro-001'
     ];
     
     this.initializeModel();
