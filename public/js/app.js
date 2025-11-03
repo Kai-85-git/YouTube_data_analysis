@@ -466,53 +466,66 @@ class YouTubeAnalyzerApp {
     try {
       this.uiManager.showLoading('AI分析・アイデア生成中...');
 
-      // まずパフォーマンス分析を実行
-      const performanceResponse = await fetch('/api/analyze-video-performance', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          channelId: this.currentData.channel.id,
-          maxVideos: 30,
-          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
-          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
-        })
-      });
+      // タイムアウト制御用のコントローラー（120秒に延長）
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 120000); // 120秒
 
-      const performanceResult = await performanceResponse.json();
+      try {
+        // まずパフォーマンス分析を実行
+        const performanceResponse = await fetch('/api/analyze-video-performance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            channelId: this.currentData.channel.id,
+            maxVideos: 30,
+            youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+            geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
+          }),
+          signal: controller.signal
+        });
 
-      if (!performanceResult.success) {
-        throw new Error(performanceResult.error || 'AI動画分析に失敗しました');
+        const performanceResult = await performanceResponse.json();
+
+        if (!performanceResult.success) {
+          throw new Error(performanceResult.error || 'AI動画分析に失敗しました');
+        }
+
+        // 次にアイデア生成を実行（既存の分析データを渡す）
+        const ideasResponse = await fetch('/api/generate-ai-video-ideas', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            channelId: this.currentData.channel.id,
+            youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
+            geminiApiKey: localStorage.getItem('GEMINI_API_KEY'),
+            analysisData: performanceResult.data // 既存の分析データを渡す
+          }),
+          signal: controller.signal
+        });
+
+        const ideasResult = await ideasResponse.json();
+
+        if (!ideasResult.success) {
+          throw new Error(ideasResult.error || 'AI動画アイデア生成に失敗しました');
+        }
+
+        // 両方の結果を統合して表示
+        const combinedData = {
+          ...performanceResult.data,
+          videoIdeas: ideasResult.data
+        };
+
+        this.displayAIAnalysisResults(combinedData);
+
+        clearTimeout(timeoutId);
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
-
-      // 次にアイデア生成を実行（既存の分析データを渡す）
-      const ideasResponse = await fetch('/api/generate-ai-video-ideas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          channelId: this.currentData.channel.id,
-          youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
-          geminiApiKey: localStorage.getItem('GEMINI_API_KEY'),
-          analysisData: performanceResult.data // 既存の分析データを渡す
-        })
-      });
-
-      const ideasResult = await ideasResponse.json();
-
-      if (!ideasResult.success) {
-        throw new Error(ideasResult.error || 'AI動画アイデア生成に失敗しました');
-      }
-
-      // 両方の結果を統合して表示
-      const combinedData = {
-        ...performanceResult.data,
-        videoIdeas: ideasResult.data
-      };
-
-      this.displayAIAnalysisResults(combinedData);
 
     } catch (error) {
       console.error('AI analysis error:', error);
