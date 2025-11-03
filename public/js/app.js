@@ -465,7 +465,7 @@ class YouTubeAnalyzerApp {
 
     try {
       this.uiManager.showLoading('AI分析・アイデア生成中...');
-      
+
       // まずパフォーマンス分析を実行
       const performanceResponse = await fetch('/api/analyze-video-performance', {
         method: 'POST',
@@ -486,7 +486,7 @@ class YouTubeAnalyzerApp {
         throw new Error(performanceResult.error || 'AI動画分析に失敗しました');
       }
 
-      // 次にアイデア生成を実行
+      // 次にアイデア生成を実行（既存の分析データを渡す）
       const ideasResponse = await fetch('/api/generate-ai-video-ideas', {
         method: 'POST',
         headers: {
@@ -495,7 +495,8 @@ class YouTubeAnalyzerApp {
         body: JSON.stringify({
           channelId: this.currentData.channel.id,
           youtubeApiKey: localStorage.getItem('YOUTUBE_API_KEY'),
-          geminiApiKey: localStorage.getItem('GEMINI_API_KEY')
+          geminiApiKey: localStorage.getItem('GEMINI_API_KEY'),
+          analysisData: performanceResult.data // 既存の分析データを渡す
         })
       });
 
@@ -512,7 +513,7 @@ class YouTubeAnalyzerApp {
       };
 
       this.displayAIAnalysisResults(combinedData);
-      
+
     } catch (error) {
       console.error('AI analysis error:', error);
       const errorMessage = createClientErrorMessage(error);

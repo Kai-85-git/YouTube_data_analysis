@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const { createErrorResponse } = await import('../src/utils/errors.js');
 
   try {
-    const { channelId, youtubeApiKey, geminiApiKey } = req.body;
+    const { channelId, youtubeApiKey, geminiApiKey, analysisData } = req.body;
 
     if (!channelId) {
       return res.status(400).json({
@@ -18,7 +18,17 @@ export default async function handler(req, res) {
     }
 
     const videoAnalysisService = new VideoAnalysisService(youtubeApiKey, geminiApiKey);
-    const result = await videoAnalysisService.generateVideoIdeas(channelId);
+
+    // 既存の分析データがある場合はそれを使用、ない場合は新規分析
+    let result;
+    if (analysisData && analysisData.videoData && analysisData.performanceMetrics) {
+      // 既存の分析データから動画アイデアのみを生成
+      result = await videoAnalysisService.generateVideoIdeasFromAnalysis(analysisData.videoData);
+      result.basedOnAnalysis = analysisData.performanceMetrics;
+    } else {
+      // 新規で完全分析を実行
+      result = await videoAnalysisService.generateVideoIdeas(channelId);
+    }
 
     res.status(200).json({
       success: true,
