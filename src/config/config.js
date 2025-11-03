@@ -18,7 +18,7 @@ export const config = {
   },
   server: {
     port: process.env.PORT || 3000,
-    timeout: 30000
+    timeout: 120000 // 120秒（2分）に延長
   },
   app: {
     name: 'YouTube Channel Analyzer',
