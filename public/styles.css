@@ -2866,3 +2866,65 @@ body {
 .ai-analysis-section .fab {
     font-size: inherit !important;
 }
+
+/* ===== Navigation Bar Styles ===== */
+.nav-bar {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    gap: 8px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 24px;
+    text-decoration: none;
+    color: #666;
+    font-weight: 500;
+    font-size: 14px;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-item:hover {
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.nav-item.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+}
+
+.nav-item i {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .nav-container {
+        padding: 0 16px;
+    }
+
+    .nav-item {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+
+    .nav-item span {
+        display: none;
+    }
+
+    .nav-item i {
+        font-size: 20px;
+    }
+}
