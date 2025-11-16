@@ -10,6 +10,7 @@ import { CommentAnalyzer } from './src/services/comment-analyzer.js';
 import { ContentIdeaService } from './src/services/content-idea-service.js';
 import { VideoAnalysisService } from './src/services/video-analysis-service.js';
 import { GeminiCommentAnalyzer } from './src/services/gemini-comment-analyzer.js';
+import { LiveChatService } from './src/services/live-chat-service.js';
 import { findAvailablePort } from './src/utils/port-finder.js';
 
 // Validate API key
@@ -517,9 +518,145 @@ app.post('/api/generate-content-ideas', async (req, res) => {
     }
 });
 
+// ===== Live Chat Endpoints =====
+
+app.post('/api/live-chat/init', async (req, res) => {
+    try {
+        const { videoIdOrUrl, youtubeApiKey } = req.body;
+
+        if (!videoIdOrUrl) {
+            return res.status(400).json({
+                success: false,
+                error: '動画IDまたはURLが必要です',
+                message: 'YouTubeライブ動画のIDまたはURLを入力してください'
+            });
+        }
+
+        const apiKey = youtubeApiKey || process.env.YOUTUBE_API_KEY;
+        if (!apiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'YouTube APIキーが必要です',
+                message: 'YouTube APIキーを設定してください'
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Initializing live chat for: ${videoIdOrUrl}`);
+
+        const liveChatService = new LiveChatService(apiKey);
+        const chatInfo = await liveChatService.initializeLiveChat(videoIdOrUrl);
+
+        console.log(`[${new Date().toISOString()}] Live chat initialized successfully`);
+
+        res.json({
+            success: true,
+            data: chatInfo
+        });
+
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Live chat initialization error:`, error);
+
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
+app.post('/api/live-chat/messages', async (req, res) => {
+    try {
+        const { liveChatId, pageToken, youtubeApiKey } = req.body;
+
+        if (!liveChatId) {
+            return res.status(400).json({
+                success: false,
+                error: 'ライブチャットIDが必要です',
+                message: 'ライブチャットIDを指定してください'
+            });
+        }
+
+        const apiKey = youtubeApiKey || process.env.YOUTUBE_API_KEY;
+        if (!apiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'YouTube APIキーが必要です',
+                message: 'YouTube APIキーを設定してください'
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Fetching live chat messages for: ${liveChatId}`);
+
+        const liveChatService = new LiveChatService(apiKey);
+        const messages = await liveChatService.getChatMessages(liveChatId, pageToken);
+
+        console.log(`[${new Date().toISOString()}] Retrieved ${messages.messageCount} messages`);
+
+        res.json({
+            success: true,
+            data: messages
+        });
+
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Live chat messages error:`, error);
+
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
+app.get('/api/live-chat/stream/:liveChatId', async (req, res) => {
+    const { liveChatId } = req.params;
+    const apiKey = req.query.apiKey || process.env.YOUTUBE_API_KEY;
+
+    if (!apiKey) {
+        return res.status(400).json({
+            success: false,
+            error: 'YouTube APIキーが必要です'
+        });
+    }
+
+    // Set headers for Server-Sent Events
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    console.log(`[${new Date().toISOString()}] Starting live chat stream for: ${liveChatId}`);
+
+    const liveChatService = new LiveChatService(apiKey);
+
+    // Start polling and send messages to client
+    const sessionId = liveChatService.startPolling(
+        liveChatId,
+        (messages) => {
+            // Send new messages to client via SSE
+            res.write(`data: ${JSON.stringify({ type: 'messages', messages })}\n\n`);
+        },
+        (error) => {
+            // Send error to client
+            res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+        }
+    );
+
+    // Send initial connection message
+    res.write(`data: ${JSON.stringify({ type: 'connected', sessionId })}\n\n`);
+
+    // Clean up when client disconnects
+    req.on('close', () => {
+        console.log(`[${new Date().toISOString()}] Client disconnected, stopping live chat stream`);
+        liveChatService.stopPolling(sessionId);
+        res.end();
+    });
+});
+
 app.get('/api/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         timestamp: new Date().toISOString(),
         service: 'YouTube Channel Analyzer API'
     });
