@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Live Chat Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .input-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .video-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .video-info.active {
+            display: block;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .chat-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .chat-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .status-indicator.active {
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .message-content {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-owner {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .badge-moderator {
+            background: #4dabf7;
+            color: white;
+        }
+
+        .badge-sponsor {
+            background: #51cf66;
+            color: white;
+        }
+
+        .badge-verified {
+            background: #845ef7;
+            color: white;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .message-text {
+            color: #333;
+            line-height: 1.4;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            color: #c62828;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #666;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-item span {
+                display: none;
+            }
+            .nav-item {
+                padding: 12px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 YouTube Live Chat Viewer</h1>
+            <p class="subtitle">リアルタイムでYouTubeライブのチャットコメントを表示</p>
+        </div>
+
+        <!-- Navigation Bar -->
+        <nav class="nav-bar">
+            <div class="nav-container">
+                <a href="/" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>チャンネル分析</span>
+                </a>
+                <a href="/live-chat.html" class="nav-item active">
+                    <i class="fas fa-comments"></i>
+                    <span>ライブチャット</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="videoUrl">YouTube動画URL または 動画ID</label>
+                <input
+                    type="text"
+                    id="videoUrl"
+                    placeholder="例: https://www.youtube.com/watch?v=VIDEO_ID または VIDEO_ID"
+                >
+            </div>
+            <div class="button-group">
+                <button id="startBtn" class="btn-primary">
+                    チャット開始
+                </button>
+                <button id="stopBtn" class="btn-secondary" disabled>
+                    停止
+                </button>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="video-info" id="videoInfo">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">動画タイトル</div>
+                    <div class="info-value" id="videoTitle">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">チャンネル</div>
+                    <div class="info-value" id="channelTitle">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">ステータス</div>
+                    <div class="info-value" id="liveStatus">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">視聴者数</div>
+                    <div class="info-value" id="viewerCount">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="chat-title">ライブチャット</div>
+                <div class="chat-stats">
+                    <div class="stat-item">
+                        <div class="status-indicator" id="statusIndicator"></div>
+                        <span id="statusText">未接続</span>
+                    </div>
+                    <div class="stat-item">
+                        💬 <span id="messageCount">0</span> メッセージ
+                    </div>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <p>動画URLを入力して「チャット開始」をクリックしてください</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        let liveChatId = null;
+        let messageCount = 0;
+
+        const elements = {
+            videoUrl: document.getElementById('videoUrl'),
+            startBtn: document.getElementById('startBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            errorMessage: document.getElementById('errorMessage'),
+            videoInfo: document.getElementById('videoInfo'),
+            videoTitle: document.getElementById('videoTitle'),
+            channelTitle: document.getElementById('channelTitle'),
+            liveStatus: document.getElementById('liveStatus'),
+            viewerCount: document.getElementById('viewerCount'),
+            chatMessages: document.getElementById('chatMessages'),
+            statusIndicator: document.getElementById('statusIndicator'),
+            statusText: document.getElementById('statusText'),
+            messageCount: document.getElementById('messageCount')
+        };
+
+        elements.startBtn.addEventListener('click', initializeChat);
+        elements.stopBtn.addEventListener('click', stopChat);
+
+        async function initializeChat() {
+            const videoIdOrUrl = elements.videoUrl.value.trim();
+
+            if (!videoIdOrUrl) {
+                showError('動画URLまたはIDを入力してください');
+                return;
+            }
+
+            hideError();
+            elements.startBtn.disabled = true;
+            elements.startBtn.innerHTML = '<span class="loading"></span> 接続中...';
+
+            try {
+                const response = await fetch('/api/live-chat/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ videoIdOrUrl })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || '初期化に失敗しました');
+                }
+
+                const chatInfo = result.data;
+                liveChatId = chatInfo.liveChatId;
+
+                // Update video info
+                elements.videoTitle.textContent = chatInfo.videoTitle;
+                elements.channelTitle.textContent = chatInfo.channelTitle;
+                elements.liveStatus.textContent = chatInfo.isLive ? '🔴 ライブ配信中' : '⏸️ 配信終了';
+                elements.viewerCount.textContent = chatInfo.concurrentViewers ?
+                    parseInt(chatInfo.concurrentViewers).toLocaleString() : '-';
+                elements.videoInfo.classList.add('active');
+
+                // Start streaming
+                startStreaming();
+
+            } catch (error) {
+                showError(error.message);
+                elements.startBtn.disabled = false;
+                elements.startBtn.textContent = 'チャット開始';
+            }
+        }
+
+        function startStreaming() {
+            elements.chatMessages.innerHTML = '';
+            messageCount = 0;
+            elements.messageCount.textContent = '0';
+
+            eventSource = new EventSource(`/api/live-chat/stream/${liveChatId}`);
+
+            eventSource.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'connected') {
+                    elements.statusIndicator.classList.add('active');
+                    elements.statusText.textContent = '接続中';
+                    elements.startBtn.textContent = 'チャット開始';
+                    elements.stopBtn.disabled = false;
+                } else if (data.type === 'messages') {
+                    addMessages(data.messages);
+                } else if (data.type === 'error') {
+                    showError(data.error);
+                }
+            };
+
+            eventSource.onerror = (error) => {
+                console.error('SSE Error:', error);
+                showError('接続が切断されました。再接続を試みています...');
+            };
+        }
+
+        function addMessages(messages) {
+            messages.forEach(msg => {
+                const messageEl = createMessageElement(msg);
+                elements.chatMessages.appendChild(messageEl);
+                messageCount++;
+            });
+
+            elements.messageCount.textContent = messageCount.toLocaleString();
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+
+        function createMessageElement(msg) {
+            const messageEl = document.createElement('div');
+            messageEl.className = 'chat-message';
+
+            const badges = [];
+            if (msg.isChatOwner) badges.push('<span class="message-badge badge-owner">配信者</span>');
+            if (msg.isChatModerator) badges.push('<span class="message-badge badge-moderator">モデレーター</span>');
+            if (msg.isChatSponsor) badges.push('<span class="message-badge badge-sponsor">スポンサー</span>');
+            if (msg.isVerified) badges.push('<span class="message-badge badge-verified">認証済み</span>');
+
+            const time = new Date(msg.publishedAt).toLocaleTimeString('ja-JP');
+
+            messageEl.innerHTML = `
+                <img src="${msg.authorProfileImageUrl}" alt="${msg.authorName}" class="message-avatar">
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-author">${msg.authorName}</span>
+                        ${badges.join('')}
+                        <span class="message-time">${time}</span>
+                    </div>
+                    <div class="message-text">${msg.message}</div>
+                </div>
+            `;
+
+            return messageEl;
+        }
+
+        function stopChat() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+
+            elements.statusIndicator.classList.remove('active');
+            elements.statusText.textContent = '停止';
+            elements.startBtn.disabled = false;
+            elements.stopBtn.disabled = true;
+        }
+
+        function showError(message) {
+            elements.errorMessage.textContent = message;
+            elements.errorMessage.classList.add('active');
+        }
+
+        function hideError() {
+            elements.errorMessage.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
