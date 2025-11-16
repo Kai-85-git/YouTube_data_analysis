@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Live Chat Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -13,42 +14,46 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
             min-height: 100vh;
             padding: 20px;
+            color: #333;
+            line-height: 1.6;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
         .header {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 36px;
+            font-weight: 700;
         }
 
         .subtitle {
-            color: #666;
+            color: #7f8c8d;
             font-size: 16px;
+            font-weight: 400;
         }
 
         .input-section {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
+            background: white;
+            border-radius: 12px;
             padding: 30px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         .input-group {
@@ -117,11 +122,11 @@
         }
 
         .video-info {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
             margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             display: none;
         }
 
@@ -136,29 +141,32 @@
         }
 
         .info-item {
-            padding: 12px;
-            background: #f5f5f5;
+            padding: 16px;
+            background: #f8f9fa;
             border-radius: 8px;
+            border-left: 3px solid #667eea;
         }
 
         .info-label {
             font-size: 12px;
-            color: #666;
+            color: #7f8c8d;
             text-transform: uppercase;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
         .info-value {
             font-size: 16px;
-            color: #333;
+            color: #2c3e50;
             font-weight: 600;
         }
 
         .chat-container {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             height: 600px;
             display: flex;
             flex-direction: column;
@@ -175,8 +183,8 @@
 
         .chat-title {
             font-size: 20px;
-            font-weight: 600;
-            color: #333;
+            font-weight: 700;
+            color: #2c3e50;
         }
 
         .chat-stats {
@@ -272,22 +280,22 @@
         }
 
         .badge-owner {
-            background: #ff6b6b;
+            background: #e74c3c;
             color: white;
         }
 
         .badge-moderator {
-            background: #4dabf7;
+            background: #3498db;
             color: white;
         }
 
         .badge-sponsor {
-            background: #51cf66;
+            background: #2ecc71;
             color: white;
         }
 
         .badge-verified {
-            background: #845ef7;
+            background: #9b59b6;
             color: white;
         }
 
@@ -316,13 +324,14 @@
         }
 
         .error-message {
-            background: #ffebee;
-            border: 1px solid #ef5350;
+            background: #fee;
+            border-left: 4px solid #e74c3c;
             border-radius: 8px;
-            padding: 16px;
+            padding: 16px 20px;
             margin-bottom: 20px;
-            color: #c62828;
+            color: #c0392b;
             display: none;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.15);
         }
 
         .error-message.active {
@@ -345,38 +354,41 @@
 
         /* Navigation Bar */
         .nav-bar {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 10px 20px;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             margin-bottom: 20px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
         }
 
         .nav-item {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 16px 24px;
             text-decoration: none;
             color: #666;
             font-weight: 500;
-            transition: all 0.3s;
+            font-size: 14px;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         .nav-item:hover {
-            background: #f5f5f5;
-            color: #333;
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
         }
 
         .nav-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            color: #667eea;
+            border-bottom-color: #667eea;
         }
 
         .nav-item i {
@@ -384,11 +396,21 @@
         }
 
         @media (max-width: 768px) {
+            .nav-container {
+                padding: 0 16px;
+            }
+
+            .nav-item {
+                padding: 12px 16px;
+                font-size: 13px;
+            }
+
             .nav-item span {
                 display: none;
             }
-            .nav-item {
-                padding: 12px 16px;
+
+            .nav-item i {
+                font-size: 20px;
             }
         }
     </style>
