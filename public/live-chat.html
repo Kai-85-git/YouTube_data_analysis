@@ -532,6 +532,13 @@
                 return;
             }
 
+            // Get API key from localStorage
+            const youtubeApiKey = localStorage.getItem('youtubeApiKey');
+            if (!youtubeApiKey) {
+                showError('YouTube APIキーが設定されていません。トップページ（チャンネル分析）の設定ボタン（⚙️）からAPIキーを設定してください。');
+                return;
+            }
+
             hideError();
             elements.startBtn.disabled = true;
             elements.startBtn.innerHTML = '<span class="loading"></span> 接続中...';
@@ -540,7 +547,10 @@
                 const response = await fetch('/api/live-chat/init', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ videoIdOrUrl })
+                    body: JSON.stringify({
+                        videoIdOrUrl,
+                        youtubeApiKey
+                    })
                 });
 
                 const result = await response.json();
@@ -575,7 +585,8 @@
             messageCount = 0;
             elements.messageCount.textContent = '0';
 
-            eventSource = new EventSource(`/api/live-chat/stream/${liveChatId}`);
+            const youtubeApiKey = localStorage.getItem('youtubeApiKey');
+            eventSource = new EventSource(`/api/live-chat/stream/${liveChatId}?apiKey=${encodeURIComponent(youtubeApiKey)}`);
 
             eventSource.onmessage = (event) => {
                 const data = JSON.parse(event.data);
