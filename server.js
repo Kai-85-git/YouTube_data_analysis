@@ -694,6 +694,11 @@ app.post('/api/live-chat/analyze', async (req, res) => {
         }
 
         console.log(`[${new Date().toISOString()}] Analyzing ${messages.length} live chat messages`);
+        console.log(`[${new Date().toISOString()}] API Keys received:`, {
+            youtube: ytApiKey ? `${ytApiKey.substring(0, 8)}...` : 'missing',
+            gemini: gmApiKey ? `${gmApiKey.substring(0, 8)}...` : 'missing',
+            geminiSource: geminiApiKey ? 'client' : 'env'
+        });
 
         const liveChatService = new LiveChatService(ytApiKey, gmApiKey);
         const analysis = await liveChatService.analyzeLiveChatMessages(messages, videoTitle);
