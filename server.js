@@ -654,6 +654,69 @@ app.get('/api/live-chat/stream/:liveChatId', async (req, res) => {
     });
 });
 
+app.post('/api/live-chat/analyze', async (req, res) => {
+    try {
+        const { messages, videoTitle, youtubeApiKey, geminiApiKey } = req.body;
+
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'メッセージが必要です',
+                message: '分析するメッセージを送信してください'
+            });
+        }
+
+        if (!videoTitle) {
+            return res.status(400).json({
+                success: false,
+                error: '動画タイトルが必要です',
+                message: '動画タイトルを指定してください'
+            });
+        }
+
+        const ytApiKey = youtubeApiKey || process.env.YOUTUBE_API_KEY;
+        const gmApiKey = geminiApiKey || process.env.GEMINI_API_KEY;
+
+        if (!ytApiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'YouTube APIキーが必要です',
+                message: 'YouTube APIキーを設定してください'
+            });
+        }
+
+        if (!gmApiKey) {
+            return res.status(400).json({
+                success: false,
+                error: 'Gemini APIキーが必要です',
+                message: 'Gemini APIキーを設定してください'
+            });
+        }
+
+        console.log(`[${new Date().toISOString()}] Analyzing ${messages.length} live chat messages`);
+
+        const liveChatService = new LiveChatService(ytApiKey, gmApiKey);
+        const analysis = await liveChatService.analyzeLiveChatMessages(messages, videoTitle);
+
+        console.log(`[${new Date().toISOString()}] Live chat analysis completed`);
+
+        res.json({
+            success: true,
+            data: analysis
+        });
+
+    } catch (error) {
+        console.error(`[${new Date().toISOString()}] Live chat analysis error:`, error);
+
+        const errorResponse = createErrorResponse(error);
+        res.status(errorResponse.statusCode).json({
+            success: false,
+            error: errorResponse.error,
+            details: errorResponse.details
+        });
+    }
+});
+
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
