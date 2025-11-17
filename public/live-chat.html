@@ -413,6 +413,138 @@
                 font-size: 20px;
             }
         }
+
+        /* Analysis Section Styles */
+        .analysis-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .analysis-header h3 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .analysis-subtitle {
+            color: #7f8c8d;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .analysis-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .analysis-comment {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .analysis-comment.good {
+            border-left-color: #2ecc71;
+        }
+
+        .analysis-comment.constructive {
+            border-left-color: #3498db;
+        }
+
+        .analysis-comment.improvement {
+            border-left-color: #e67e22;
+        }
+
+        .analysis-comment-text {
+            color: #2c3e50;
+            font-size: 15px;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .analysis-comment-reason {
+            color: #7f8c8d;
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .analysis-summary {
+            margin-top: 24px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 8px;
+        }
+
+        .analysis-summary h4 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 18px;
+        }
+
+        .analysis-summary-item {
+            margin-bottom: 12px;
+        }
+
+        .analysis-summary-label {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .analysis-summary-text {
+            color: #2c3e50;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .analysis-loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
     </style>
 </head>
 <body>
@@ -452,10 +584,41 @@
                 <button id="stopBtn" class="btn-secondary" disabled>
                     停止
                 </button>
+                <button id="analyzeBtn" class="btn-primary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" disabled>
+                    🤖 コメント分析
+                </button>
             </div>
         </div>
 
         <div class="error-message" id="errorMessage"></div>
+
+        <!-- Analysis Results Section -->
+        <div class="analysis-section" id="analysisSection" style="display: none;">
+            <div class="analysis-header">
+                <h3>📊 コメント分析結果</h3>
+                <p class="analysis-subtitle">AIによる自動分類</p>
+            </div>
+
+            <div class="analysis-tabs">
+                <button class="tab-btn active" data-tab="good">💚 いいコメント</button>
+                <button class="tab-btn" data-tab="constructive">👍 建設的なコメント</button>
+                <button class="tab-btn" data-tab="improvement">💡 改善コメント</button>
+            </div>
+
+            <div class="tab-content active" id="tab-good">
+                <div id="goodComments" class="comment-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-constructive">
+                <div id="constructiveComments" class="comment-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-improvement">
+                <div id="improvementComments" class="comment-list"></div>
+            </div>
+
+            <div class="analysis-summary" id="analysisSummary"></div>
+        </div>
 
         <div class="video-info" id="videoInfo">
             <div class="info-grid">
@@ -504,11 +667,14 @@
         let eventSource = null;
         let liveChatId = null;
         let messageCount = 0;
+        let allMessages = []; // Store all messages for analysis
+        let currentVideoTitle = '';
 
         const elements = {
             videoUrl: document.getElementById('videoUrl'),
             startBtn: document.getElementById('startBtn'),
             stopBtn: document.getElementById('stopBtn'),
+            analyzeBtn: document.getElementById('analyzeBtn'),
             errorMessage: document.getElementById('errorMessage'),
             videoInfo: document.getElementById('videoInfo'),
             videoTitle: document.getElementById('videoTitle'),
@@ -518,11 +684,25 @@
             chatMessages: document.getElementById('chatMessages'),
             statusIndicator: document.getElementById('statusIndicator'),
             statusText: document.getElementById('statusText'),
-            messageCount: document.getElementById('messageCount')
+            messageCount: document.getElementById('messageCount'),
+            analysisSection: document.getElementById('analysisSection'),
+            goodComments: document.getElementById('goodComments'),
+            constructiveComments: document.getElementById('constructiveComments'),
+            improvementComments: document.getElementById('improvementComments'),
+            analysisSummary: document.getElementById('analysisSummary')
         };
 
         elements.startBtn.addEventListener('click', initializeChat);
         elements.stopBtn.addEventListener('click', stopChat);
+        elements.analyzeBtn.addEventListener('click', analyzeMessages);
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                switchTab(tab);
+            });
+        });
 
         async function initializeChat() {
             const videoIdOrUrl = elements.videoUrl.value.trim();
@@ -561,6 +741,8 @@
 
                 const chatInfo = result.data;
                 liveChatId = chatInfo.liveChatId;
+                currentVideoTitle = chatInfo.videoTitle; // Save video title for analysis
+                allMessages = []; // Reset messages array
 
                 // Update video info
                 elements.videoTitle.textContent = chatInfo.videoTitle;
@@ -614,10 +796,18 @@
                 const messageEl = createMessageElement(msg);
                 elements.chatMessages.appendChild(messageEl);
                 messageCount++;
+
+                // Store message for analysis
+                allMessages.push(msg);
             });
 
             elements.messageCount.textContent = messageCount.toLocaleString();
             elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+
+            // Enable analyze button if we have enough messages
+            if (allMessages.length >= 10) {
+                elements.analyzeBtn.disabled = false;
+            }
         }
 
         function createMessageElement(msg) {
@@ -657,6 +847,132 @@
             elements.statusText.textContent = '停止';
             elements.startBtn.disabled = false;
             elements.stopBtn.disabled = true;
+        }
+
+        async function analyzeMessages() {
+            if (allMessages.length < 10) {
+                showError('分析には最低10件のコメントが必要です。もう少し待ってください。');
+                return;
+            }
+
+            const geminiApiKey = localStorage.getItem('GEMINI_API_KEY');
+            if (!geminiApiKey) {
+                showError('Gemini APIキーが設定されていません。トップページの設定ボタン（⚙️）からAPIキーを設定してください。');
+                return;
+            }
+
+            const youtubeApiKey = localStorage.getItem('YOUTUBE_API_KEY');
+
+            elements.analyzeBtn.disabled = true;
+            elements.analyzeBtn.innerHTML = '<span class="loading"></span> 分析中...';
+
+            try {
+                const response = await fetch('/api/live-chat/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        messages: allMessages,
+                        videoTitle: currentVideoTitle,
+                        youtubeApiKey,
+                        geminiApiKey
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || '分析に失敗しました');
+                }
+
+                displayAnalysisResults(result.data);
+                elements.analysisSection.style.display = 'block';
+                elements.analysisSection.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                showError('分析エラー: ' + error.message);
+            } finally {
+                elements.analyzeBtn.disabled = false;
+                elements.analyzeBtn.innerHTML = '🤖 コメント分析';
+            }
+        }
+
+        function displayAnalysisResults(analysis) {
+            // Display good comments (topComments)
+            elements.goodComments.innerHTML = '';
+            if (analysis.topComments && analysis.topComments.length > 0) {
+                analysis.topComments.forEach(comment => {
+                    const commentEl = document.createElement('div');
+                    commentEl.className = 'analysis-comment good';
+                    commentEl.innerHTML = `
+                        <div class="analysis-comment-text">${comment.text}</div>
+                        <div class="analysis-comment-reason">💡 ${comment.reason}</div>
+                    `;
+                    elements.goodComments.appendChild(commentEl);
+                });
+            } else {
+                elements.goodComments.innerHTML = '<p class="analysis-loading">該当するコメントがありません</p>';
+            }
+
+            // Display constructive comments
+            elements.constructiveComments.innerHTML = '';
+            if (analysis.constructiveComments && analysis.constructiveComments.length > 0) {
+                analysis.constructiveComments.forEach(comment => {
+                    const commentEl = document.createElement('div');
+                    commentEl.className = 'analysis-comment constructive';
+                    commentEl.innerHTML = `
+                        <div class="analysis-comment-text">${comment.text}</div>
+                        <div class="analysis-comment-reason">💡 ${comment.reason}</div>
+                    `;
+                    elements.constructiveComments.appendChild(commentEl);
+                });
+            } else {
+                elements.constructiveComments.innerHTML = '<p class="analysis-loading">該当するコメントがありません</p>';
+            }
+
+            // Display improvement comments
+            elements.improvementComments.innerHTML = '';
+            if (analysis.improvementComments && analysis.improvementComments.length > 0) {
+                analysis.improvementComments.forEach(comment => {
+                    const commentEl = document.createElement('div');
+                    commentEl.className = 'analysis-comment improvement';
+                    commentEl.innerHTML = `
+                        <div class="analysis-comment-text">${comment.text}</div>
+                        <div class="analysis-comment-reason">💡 ${comment.reason}</div>
+                    `;
+                    elements.improvementComments.appendChild(commentEl);
+                });
+            } else {
+                elements.improvementComments.innerHTML = '<p class="analysis-loading">該当するコメントがありません</p>';
+            }
+
+            // Display summary
+            if (analysis.summary) {
+                elements.analysisSummary.innerHTML = `
+                    <h4>📋 分析サマリー</h4>
+                    <div class="analysis-summary-item">
+                        <div class="analysis-summary-label">全体的な感情</div>
+                        <div class="analysis-summary-text">${analysis.summary.overallSentiment || 'N/A'}</div>
+                    </div>
+                    <div class="analysis-summary-item">
+                        <div class="analysis-summary-label">主要なテーマ</div>
+                        <div class="analysis-summary-text">${analysis.summary.keyThemes ? analysis.summary.keyThemes.join(', ') : 'N/A'}</div>
+                    </div>
+                    <div class="analysis-summary-item">
+                        <div class="analysis-summary-label">視聴者層に関する洞察</div>
+                        <div class="analysis-summary-text">${analysis.summary.audienceInsights || 'N/A'}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function switchTab(tabName) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active class to selected tab and content
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`tab-${tabName}`).classList.add('active');
         }
 
         function showError(message) {
