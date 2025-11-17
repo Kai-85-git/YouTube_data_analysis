@@ -706,13 +706,22 @@ app.post('/api/live-chat/analyze', async (req, res) => {
         });
 
     } catch (error) {
-        console.error(`[${new Date().toISOString()}] Live chat analysis error:`, error);
+        console.error(`[${new Date().toISOString()}] Live chat analysis error:`, {
+            message: error.message,
+            stack: error.stack,
+            name: error.name,
+            messagesCount: req.body.messages?.length
+        });
 
         const errorResponse = createErrorResponse(error);
         res.status(errorResponse.statusCode).json({
             success: false,
             error: errorResponse.error,
-            details: errorResponse.details
+            details: errorResponse.details,
+            debugInfo: process.env.NODE_ENV !== 'production' ? {
+                message: error.message,
+                stack: error.stack
+            } : undefined
         });
     }
 });

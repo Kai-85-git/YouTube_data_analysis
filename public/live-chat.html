@@ -866,6 +866,12 @@
             elements.analyzeBtn.disabled = true;
             elements.analyzeBtn.innerHTML = '<span class="loading"></span> 分析中...';
 
+            console.log('Starting analysis with:', {
+                messagesCount: allMessages.length,
+                videoTitle: currentVideoTitle,
+                firstMessage: allMessages[0]
+            });
+
             try {
                 const response = await fetch('/api/live-chat/analyze', {
                     method: 'POST',
@@ -880,8 +886,13 @@
 
                 const result = await response.json();
 
+                console.log('Analysis response:', result);
+
                 if (!result.success) {
-                    throw new Error(result.error || '分析に失敗しました');
+                    const errorMsg = result.error || '分析に失敗しました';
+                    const details = result.details ? ` (${result.details})` : '';
+                    const debugInfo = result.debugInfo ? `\nデバッグ情報: ${result.debugInfo.message}` : '';
+                    throw new Error(errorMsg + details + debugInfo);
                 }
 
                 displayAnalysisResults(result.data);
@@ -889,6 +900,7 @@
                 elements.analysisSection.scrollIntoView({ behavior: 'smooth' });
 
             } catch (error) {
+                console.error('Analysis error:', error);
                 showError('分析エラー: ' + error.message);
             } finally {
                 elements.analyzeBtn.disabled = false;
