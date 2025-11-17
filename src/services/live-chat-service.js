@@ -223,19 +223,27 @@ export class LiveChatService {
     try {
       const geminiAnalyzer = new GeminiCommentAnalyzer(this.geminiApiKey);
 
-      // Format live chat messages to match comment structure
-      const formattedMessages = messages.map(msg => ({
-        snippet: {
-          topLevelComment: {
-            snippet: {
-              textDisplay: msg.message,
-              authorDisplayName: msg.authorName,
-              likeCount: 0, // Live chat messages don't have likes
-              publishedAt: msg.publishedAt
+      // Filter and format live chat messages to match comment structure
+      const formattedMessages = messages
+        .filter(msg => msg && msg.message && msg.message.trim().length > 0) // Filter out empty messages
+        .map(msg => ({
+          snippet: {
+            topLevelComment: {
+              snippet: {
+                textDisplay: msg.message || '',
+                authorDisplayName: msg.authorName || 'Anonymous',
+                likeCount: 0, // Live chat messages don't have likes
+                publishedAt: msg.publishedAt || new Date().toISOString()
+              }
             }
           }
-        }
-      }));
+        }));
+
+      if (formattedMessages.length === 0) {
+        throw new YouTubeAnalyzerError('No valid messages to analyze after filtering', 'NO_VALID_MESSAGES');
+      }
+
+      console.log(`Analyzing ${formattedMessages.length} formatted messages for video: ${videoTitle}`);
 
       // Use the existing Gemini comment analyzer
       const analysis = await geminiAnalyzer.analyzeVideoComments(formattedMessages, videoTitle);
@@ -243,9 +251,15 @@ export class LiveChatService {
       return {
         ...analysis,
         totalMessages: messages.length,
+        analyzedMessages: formattedMessages.length,
         analyzedAt: new Date().toISOString()
       };
     } catch (error) {
+      console.error('Live chat analysis error details:', {
+        error: error.message,
+        stack: error.stack,
+        messagesCount: messages.length
+      });
       throw new YouTubeAnalyzerError(`Failed to analyze live chat messages: ${error.message}`, error.code);
     }
   }
